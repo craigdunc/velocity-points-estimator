@@ -15,7 +15,7 @@ export default function SettingsScreen({ goTo, goBack }) {
                     onProfileClick={() => goTo(0)}
                     activeTab=""
                     onTabClick={(tab) => {
-                        if (tab === 'For you') goTo(5);
+                        if (tab === 'My Velocity') goTo(5);
                         if (tab === 'Earn and use points') goTo(3);
                     }}
                     onSettingsClick={() => goBack()}

@@ -1,5 +1,6 @@
 // src/components/RewardCard.jsx
 import React from 'react';
+import VelocityPointsIcon from '../assets/icons/velocity-points.svg';
 
 export default function RewardCard({
     reward,
@@ -111,9 +112,7 @@ export default function RewardCard({
                             </div>
 
                             <div className="flex items-center space-x-1.5 drop-shadow-lg pb-0.5 pointer-events-auto">
-                                <svg className="w-[18px] h-[16px] text-white overflow-visible" viewBox="0 0 27 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M26.0576 23.6163C26.0794 23.639 26.1012 23.639 26.1232 23.639C26.167 23.639 26.1891 23.639 26.2329 23.5933C26.2764 23.5476 26.2764 23.4564 26.2329 23.4107C23.6278 20.5556 20.4319 18.249 16.8637 16.7647C15.7692 16.3078 15.7692 16.3078 15.7692 16.3078C15.1999 16.0563 14.8279 15.4856 14.8279 14.8232C14.8935 12.3795 20.4099 12.882 20.9791 11.7171C21.0668 11.5116 21.0668 11.5116 21.0668 11.5116C19.9284 10.4838 18.5929 9.73024 17.1046 9.2964C17.0828 9.36483 17.0387 9.63882 17.3451 10.1641C17.6738 10.7123 16.9949 11.603 15.988 10.6439C15.9004 10.5752 15.9004 10.5752 15.9004 10.5752C8.58908 3.58648 5.21819 8.19991 0.2491 0.0695199C0.20529 0.000828303 0.139698 -0.0218967 0.0738597 0.0238116C0.00826853 0.0695199 -0.0137602 0.137953 0.00826853 0.206386C3.92666 10.0499 11.9384 7.97163 12.8797 17.1528C12.9235 17.4955 13.1644 17.7695 13.4926 17.8152C17.9362 18.546 22.2707 20.4645 26.0358 23.6163H26.0576" fill="currentColor" />
-                                </svg>
+                                <img src={VelocityPointsIcon} alt="" className="w-[18px] h-[18px]" />
                                 <div className="flex items-baseline space-x-1">
                                     <span className="text-[16px] font-medium uppercase mt-0.5">
                                         {reward.pts.toLocaleString()}

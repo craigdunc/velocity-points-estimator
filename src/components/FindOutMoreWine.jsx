@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSaveSlots } from '../state/useSaveSlots';
-import WineLogo from '../assets/logos/qantas-wine.svg';
+import WineLogo from '../assets/logos/qantas-wine.svg'; // reused for Virgin Wines
 
 export default function FindOutMoreWine({ onClose }) {
     const { current, updateWTEFavourites } = useSaveSlots();
@@ -29,8 +29,8 @@ export default function FindOutMoreWine({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                    Qantas Wine
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                    Virgin Wines
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,10 +42,10 @@ export default function FindOutMoreWine({ onClose }) {
             <div className="flex-grow p-6 overflow-y-auto">
                 <div className="flex items-center mb-6 pl-1 pr-1">
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
-                        <img src={WineLogo} alt="Qantas Wine" className="w-8 h-8 object-contain" />
+                        <img src={WineLogo} alt="Virgin Wines" className="w-8 h-8 object-contain" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                        Qantas Wine
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                        Virgin Wines
                     </h3>
                 </div>
 

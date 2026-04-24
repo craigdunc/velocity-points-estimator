@@ -57,6 +57,7 @@ export default function MonthChange({ goTo }) {
       ...current, // Spread the existing state
       currentMonth: nextIso,
       monthlyEarnedByWTE: results,
+      wteMonthlySelections: {}, // Forget the selections made for the month when the month ticks over
       currentPtsBalance: (current.currentPtsBalance || 0) + total
     });
 

@@ -26,7 +26,7 @@ export default function HelpMeModal({ wteId, earned, target, onClose }) {
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center shrink-0">
                         <img src={wte.iconSrc} alt={wte.name} className="w-8 h-8 object-contain" />
                     </div>
-                    <h3 className="text-[22px] font-bold text-[#323232] leading-tight" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                    <h3 className="text-[22px] font-bold text-[#323232] leading-tight" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                         Help me with<br />{wte.name}
                     </h3>
                 </div>

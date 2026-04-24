@@ -19,7 +19,7 @@ export default function FindOutMoreHotels({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                     Hotels
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -32,15 +32,15 @@ export default function FindOutMoreHotels({ onClose }) {
             <div className="flex-grow p-6 overflow-y-auto">
                 <div className="flex items-center mb-6 pl-1 pr-1">
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
-                        <img src={HotelsLogo} alt="Qantas Hotels" className="w-8 h-8 object-contain" />
+                        <img src={HotelsLogo} alt="Velocity Hotels" className="w-8 h-8 object-contain" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                        Qantas Hotels
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                        Velocity Hotels
                     </h3>
                 </div>
 
                 <p className="text-[14px] text-[#222222] mb-6 leading-relaxed">
-                    Book hotels and accommodation via Qantas Hotels and earn 3 Qantas Points per A$1 spent on eligible stays. Choose from over 500,000 properties worldwide.
+                    Book hotels and accommodation via Velocity Hotels and earn 3 Velocity Points per A$1 spent on eligible stays. Choose from over 500,000 properties worldwide.
                 </p>
 
                 <div className="flex items-center justify-between mb-4">

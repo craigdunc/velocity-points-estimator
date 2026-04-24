@@ -186,7 +186,7 @@ export default function LeafletMap({
                 if (!cityName) return null;
                 return (
                     <div className="absolute bottom-0 left-0 bg-white px-8 py-5 rounded-tr-[36px] shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[1000] min-w-[200px] border-t border-r border-gray-50 flex items-center">
-                        <span className="text-[34px] font-medium text-[#222] tracking-tight" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                        <span className="text-[34px] font-medium text-[#222] tracking-tight" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                             {cityName}
                         </span>
                     </div>

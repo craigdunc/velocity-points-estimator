@@ -4,9 +4,15 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/points-estimator/',  // <-- the GitHub repo name
+  base: '/velocity-points-estimator/',
   plugins: [
     tailwindcss(),
     react()
   ],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001',
+    }
+  }
 })
+

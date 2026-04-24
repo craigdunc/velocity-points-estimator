@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import QantasLogo from '../assets/logos/qantas.svg';
+import VelocityLogo from '../assets/logos/qantas.svg'; // TODO: replace with actual Velocity logo
 import { useSaveSlots } from '../state/useSaveSlots';
 
 const oneWorldLogo = (
@@ -30,7 +30,7 @@ const ChevronDown = () => (
     </svg>
 );
 
-export default function Header({ isMobile, showAccountNav = true, onProfileClick, activeTab = 'Earn and use points', onTabClick, onTimePasses, onSettingsClick }) {
+export default function Header({ showAccountNav = true, onProfileClick, activeTab = 'Earn and use points', onTabClick, onTimePasses, onSettingsClick }) {
     const { slots, activeSlotId, current } = useSaveSlots() || {};
     const activeSlot = slots?.find(s => s.id === activeSlotId);
     const slotName = activeSlot?.name || 'Craig Duncan';
@@ -92,59 +92,48 @@ export default function Header({ isMobile, showAccountNav = true, onProfileClick
 
     const formattedPoints = new Intl.NumberFormat().format(animatedPts);
 
-    if (isMobile) {
-        return (
-            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
-                <img src={QantasLogo} alt="Qantas" className="h-6" />
-                <div className="flex items-center space-x-3">
-                    <button
-                        onClick={onProfileClick}
-                        className="bg-[#E40000] text-white text-[10px] font-bold px-2 py-1 rounded-full cursor-pointer hover:bg-red-700 transition-colors"
-                    >
-                        {initials} {formattedPoints} pts
-                    </button>
-                    {cartIcon}
-                </div>
-            </div>
-        );
-    }
-
     return (
         <header className="w-full bg-white font-sans">
             {/* Layer 1: Global Bar */}
-            <div className="max-w-[1218px] mx-auto px-4 xl:px-0 py-4 flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                    <img src={QantasLogo} alt="Qantas" className="h-10" />
-                    <div className="w-px h-8 bg-gray-200" />
-                    {oneWorldLogo}
+            <div className="max-w-[1218px] mx-auto px-4 xl:px-0 py-3 md:py-4 flex justify-between items-center">
+                <div className="flex items-center space-x-2 md:space-x-4">
+                    <img src={VelocityLogo} alt="Velocity" className="h-6 md:h-10" />
+                    <div className="hidden md:block w-px h-8 bg-gray-200" />
+                    <div className="hidden md:block">
+                        {oneWorldLogo}
+                    </div>
                 </div>
 
-                <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-2 text-[13px] font-medium text-[#323232]">
+                <div className="flex items-center space-x-4 md:space-x-6">
+                    <div className="hidden md:flex items-center space-x-2 text-[13px] font-medium text-[#323232]">
                         {auFlag}
                         <span>AU | EN</span>
                     </div>
-                    <button className="text-gray-600 hover:text-black">
-                        {cartIcon}
-                    </button>
+
                     <button
                         id="header-points-pill"
                         onClick={onProfileClick}
-                        className="flex items-center bg-[#E40000] text-white rounded-full pl-1 pr-4 py-1.5 shadow-sm overflow-hidden hover:bg-red-700 transition-colors cursor-pointer"
+                        className="flex flex-row-reverse md:flex-row items-center bg-[#E40000] text-white rounded-full pr-1 pl-3 md:pl-1 md:pr-4 py-1.5 md:py-1.5 shadow-sm overflow-hidden hover:bg-red-700 transition-colors cursor-pointer"
                     >
-                        <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center text-[11px] font-bold border border-white/20 mr-2">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/20 flex items-center justify-center text-[10px] md:text-[11px] font-bold border border-white/20 ml-1.5 md:ml-0 md:mr-2">
                             {initials}
                         </div>
-                        <span className="text-[14px] font-bold tracking-tight">{formattedPoints} points</span>
+                        <span className="text-[14px] md:text-[14px] font-bold tracking-tight">
+                            {formattedPoints} <span className="hidden md:inline">points</span><span className="md:hidden">pts</span>
+                        </span>
+                    </button>
+
+                    <button className="text-gray-600 hover:text-black">
+                        {cartIcon}
                     </button>
                 </div>
             </div>
 
             {/* Layer 2: Main Navigation */}
-            <div className="max-w-[1218px] mx-auto px-4 xl:px-0 py-3 flex justify-between items-center bg-white border-t border-gray-50">
+            <div className="hidden md:flex max-w-[1218px] mx-auto px-4 xl:px-0 py-3 justify-between items-center bg-white border-t border-gray-50">
                 <nav className="flex items-center space-x-8">
                     {[
-                        'Flights', 'Travel', 'Shop', 'Banking & Insurance', 'Frequent Flyer', 'Qantas for Business'
+                        'Flights', 'Travel', 'Shop', 'Banking & Insurance', 'Frequent Flyer', 'Velocity for Business'
                     ].map((item) => (
                         <button key={item} className="flex items-center text-[15px] text-[#323232] hover:text-[#E40000] font-medium transition-colors">
                             {item}
@@ -158,21 +147,25 @@ export default function Header({ isMobile, showAccountNav = true, onProfileClick
             {/* Layer 3: Account Navigation */}
             {showAccountNav && (
                 <div className="w-full bg-[#323232]">
-                    <div className="max-w-[1218px] mx-auto px-4 xl:px-0 flex justify-between items-center">
-                        <nav className="flex items-center h-14">
-                            <button className="px-5 text-[14px] text-white font-medium hover:bg-white/10 h-full transition-colors border-r border-white/10">
+                    <div className="max-w-[1218px] mx-auto px-4 xl:px-0 flex justify-between items-center h-14">
+                        <nav className="flex items-center h-full flex-grow overflow-hidden">
+                            <button className="pr-4 md:pr-0 md:px-5 text-[15px] text-white font-medium hover:bg-white/10 h-full transition-colors md:border-r md:border-white/10 shrink-0">
                                 My Account
                             </button>
-                            <div className="flex items-center h-full">
+
+                            <span className="text-white/40 md:hidden ml-1 shrink-0">|</span>
+
+                            {/* Desktop Tabs */}
+                            <div className="hidden md:flex items-center h-full flex-grow pl-2">
                                 {[
-                                    'For you', 'Activity statement', 'My trips', 'Earn and use points', 'Status & benefits'
+                                    'My Velocity', 'Activity statement', 'My trips', 'Earn and use points', 'Status & benefits'
                                 ].map((item) => {
                                     const isActive = item === activeTab;
                                     return (
                                         <button
                                             key={item}
                                             onClick={() => onTabClick && onTabClick(item)}
-                                            className={`px-5 text-[14px] font-medium h-full transition-colors relative flex items-center ${isActive
+                                            className={`px-5 text-[14px] font-medium h-full transition-colors relative flex items-center shrink-0 ${isActive
                                                 ? 'text-white'
                                                 : 'text-gray-300 hover:text-white hover:bg-white/5'
                                                 }`}
@@ -185,19 +178,29 @@ export default function Header({ isMobile, showAccountNav = true, onProfileClick
                                     )
                                 })}
                             </div>
+
+                            {/* Mobile Active Tab */}
+                            <div className="md:hidden flex items-center h-full px-4 relative text-white font-medium text-[15px] shrink-0">
+                                {activeTab}
+                                <svg className="w-4 h-4 ml-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                                <div className="absolute bottom-0 left-4 right-10 h-[3px] bg-[#E40000]" />
+                            </div>
                         </nav>
-                        <div className="flex items-center space-x-3">
+
+                        <div className="flex items-center space-x-3 shrink-0 ml-4">
                             {onTimePasses && (
                                 <button
                                     onClick={onTimePasses}
-                                    className="border-2 border-white hover:bg-white/10 text-white text-[15px] font-medium px-5 py-1.5 rounded-full transition-colors"
+                                    className="hidden md:block border border-white hover:bg-white/10 text-white text-[15px] font-medium px-5 py-1.5 rounded-full transition-colors"
                                 >
                                     Time Passes
                                 </button>
                             )}
                             <button
                                 onClick={onSettingsClick}
-                                className="border-2 border-white hover:bg-white/10 text-white text-[15px] font-medium px-5 py-1.5 rounded-full transition-colors"
+                                className="border border-white hover:bg-white/10 text-white text-[14px] md:text-[15px] font-medium px-4 md:px-5 py-1.5 rounded-full transition-colors"
                             >
                                 Settings
                             </button>

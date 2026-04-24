@@ -1,5 +1,5 @@
 import React from 'react';
-import QantasLogo from '../assets/logos/qantas.svg';
+import VelocityLogo from '../assets/logos/qantas.svg'; // TODO: replace with actual Velocity logo
 import fbIcon from '../assets/icons/fb.svg';
 import xIcon from '../assets/icons/x.svg';
 import inIcon from '../assets/icons/in.svg';
@@ -33,23 +33,23 @@ export default function Footer() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-16">
                     <div className="lg:col-span-1">
-                        <img src={QantasLogo} alt="Qantas" className="h-[22px] mb-6 object-contain" />
+                        <img src={VelocityLogo} alt="Velocity" className="h-[22px] mb-6 object-contain" />
                     </div>
 
                     <div>
                         <h4 className="font-medium text-[16px] mb-5">About us</h4>
                         <ul className="space-y-4 text-[#666] text-[14px]">
-                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">About Qantas</li>
+                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">About Virgin Australia</li>
                             <li className="hover:text-[#E40000] cursor-pointer transition-colors">oneworld</li>
                             <li className="hover:text-[#E40000] cursor-pointer transition-colors">News Room</li>
-                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">Qantas Group Pilot Academy</li>
+                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">Virgin Australia Pilot Academy</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="font-medium text-[16px] mb-5">Qantas Group</h4>
+                        <h4 className="font-medium text-[16px] mb-5">Virgin Australia Group</h4>
                         <ul className="space-y-4 text-[#666] text-[14px]">
-                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">About Qantas Group</li>
+                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">About Virgin Australia Group</li>
                             <li className="hover:text-[#E40000] cursor-pointer transition-colors">Careers</li>
                         </ul>
                     </div>
@@ -65,10 +65,10 @@ export default function Footer() {
                     </div>
 
                     <div>
-                        <h4 className="font-medium text-[16px] mb-5">Qantas App</h4>
+                        <h4 className="font-medium text-[16px] mb-5">Virgin Australia App</h4>
                         <ul className="space-y-4 text-[#666] text-[14px]">
-                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">Qantas App iOS</li>
-                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">Qantas App Android</li>
+                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">Virgin Australia App iOS</li>
+                            <li className="hover:text-[#E40000] cursor-pointer transition-colors">Virgin Australia App Android</li>
                         </ul>
                     </div>
                 </div>
@@ -95,7 +95,7 @@ export default function Footer() {
                         <span className="hover:text-[#E40000] hover:underline cursor-pointer">Fare types</span>
                     </div>
                     <div className="text-right whitespace-nowrap">
-                        © Qantas Airways Limited ABN 16 009 661 901
+                        © Virgin Australia Airlines Pty Ltd ABN 36 090 670 965
                     </div>
                 </div>
             </div>
@@ -103,7 +103,7 @@ export default function Footer() {
             <div className="bg-[#e6e6e6] py-6 border-t border-gray-300">
                 <div className="max-w-[1400px] mx-auto px-4 md:px-6 xl:px-8">
                     <p className="text-[13px] text-[#323232] font-semibold">
-                        Qantas would like to acknowledge the Traditional Custodians of the local lands and waterways on which we live, work and fly. We pay our respects to Elders past and present.
+                        Virgin Australia would like to acknowledge the Traditional Custodians of the local lands and waterways on which we live, work and fly. We pay our respects to Elders past and present.
                     </p>
                 </div>
             </div>

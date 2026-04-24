@@ -31,7 +31,7 @@ export default function FindOutMoreOnlineMall({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                     Shopping Online Mall
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -44,15 +44,15 @@ export default function FindOutMoreOnlineMall({ onClose }) {
             <div className="flex-grow p-6 overflow-y-auto">
                 <div className="flex items-center mb-6 pl-1 pr-1">
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
-                        <img src={OnlineMallLogo} alt="Qantas Shopping Online Mall" className="w-8 h-8 object-contain" />
+                        <img src={OnlineMallLogo} alt="Velocity eStore" className="w-8 h-8 object-contain" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                        Qantas Shopping
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                        Velocity eStore
                     </h3>
                 </div>
 
                 <p className="text-[14px] text-[#222222] mb-6 leading-relaxed">
-                    Always start your online shopping journey through the Qantas Shopping Online Mall to earn points per dollar spent at over 450 top retailers.
+                    Always start your online shopping journey through the Velocity eStore to earn points per dollar spent at over 450 top retailers.
                 </p>
 
                 <div className="flex items-center justify-between mb-4">

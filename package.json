@@ -5,7 +5,9 @@
   "type": "module",
   "homepage": "https://craigdunc.github.io/points-estimator",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"node server/index.js\"",
+    "dev:frontend": "vite",
+    "dev:server": "node server/index.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -13,8 +15,13 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@tailwindcss/vite": "^4.1.4",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
     "css": "^3.0.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
     "leaflet": "^1.9.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

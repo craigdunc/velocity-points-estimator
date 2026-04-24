@@ -29,7 +29,7 @@ export default function FindOutMoreBP({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                     BP Rewards
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -44,13 +44,13 @@ export default function FindOutMoreBP({ onClose }) {
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
                         <img src={BpRewardsLogo} alt="BP Rewards" className="w-8 h-8 object-contain" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                         BP Rewards
                     </h3>
                 </div>
 
                 <p className="text-[14px] text-[#222222] mb-6 leading-relaxed">
-                    Swipe your Qantas Frequent Flyer card at BP to earn up to 2 points per litre on premium fuels and 1 point per A$1 spent in-store.
+                    Scan your Velocity card or app at 700+ 7-Eleven locations. Earn 2 Velocity Points per litre on premium fuel, 1 pt per litre on regular, and points on in-store purchases.
                 </p>
 
                 <div className="flex items-center justify-between mb-4">

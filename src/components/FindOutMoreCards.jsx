@@ -8,14 +8,14 @@ export default function FindOutMoreCards({ onClose }) {
     const [selectedProvider, setSelectedProvider] = useState('All');
 
     const cardOptions = [
-        { id: '1', name: 'Qantas Premier Platinum', provider: 'Qantas Money', desc: 'Earn up to 70,000 bonus Qantas Points and get 2 complimentary lounge passes.' },
-        { id: '2', name: 'Qantas Premier Titanium', provider: 'Qantas Money', desc: 'Premium earning rate, 2 Qantas Club lounge passes and 10% discount on flight bookings.' },
-        { id: '3', name: 'NAB Qantas Rewards Signature', provider: 'NAB', desc: 'Enjoy up to 90,000 bonus Qantas Points and a high earn rate on everyday purchases.' },
-        { id: '4', name: 'NAB Qantas Rewards Premium', provider: 'NAB', desc: 'Earn Qantas Points on your daily spend with a competitive annual fee.' },
-        { id: '5', name: 'Westpac Altitude Qantas Platinum', provider: 'Westpac', desc: 'Earn up to 60,000 bonus points and two complimentary economy lounge invitations.' },
-        { id: '6', name: 'ANZ Frequent Flyer Black', provider: 'ANZ', desc: 'Up to 110,000 bonus Qantas Points and $255 back to your new card.' },
-        { id: '7', name: 'CommBank Ultimate Awards', provider: 'CommBank', desc: 'Earn Qantas Points on every purchase and access selected airport lounges.' },
-        { id: '8', name: 'Amex Qantas Ultimate Card', provider: 'American Express', desc: 'Up to 75,000 bonus Qantas Points, plus a $450 Qantas Travel Credit each year.' },
+        { id: '1', name: 'Amex Velocity Platinum', provider: 'American Express', desc: 'Earn up to 100,000 bonus Velocity Points and 1.25 pts/$1 on everyday spend.' },
+        { id: '2', name: 'Westpac Altitude Velocity Black', provider: 'Westpac', desc: 'Earn up to 80,000 bonus Velocity Points plus a high earn rate on everyday spend.' },
+        { id: '3', name: 'Virgin Money High Flyer', provider: 'Virgin Money', desc: 'Earn 1 Velocity Point per $1 and up to 50,000 bonus points on joining.' },
+        { id: '4', name: 'NAB Velocity Rewards Signature', provider: 'NAB', desc: 'Earn Velocity Points on everyday purchases with competitive earn rates.' },
+        { id: '5', name: 'St.George Amplify Signature Visa', provider: 'St.George', desc: 'Earn up to 60,000 bonus Velocity Points and points on everyday spend.' },
+        
+        
+        
     ];
 
     const displayedCards = selectedProvider === 'All'
@@ -29,7 +29,7 @@ export default function FindOutMoreCards({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                     Credit Cards
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -44,7 +44,7 @@ export default function FindOutMoreCards({ onClose }) {
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
                         <img src={PointsCardLogo} alt="Credit Cards" className="w-8 h-8 object-contain" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                         Points Earning Cards
                     </h3>
                 </div>
@@ -62,7 +62,7 @@ export default function FindOutMoreCards({ onClose }) {
                             onChange={(e) => setSelectedProvider(e.target.value)}
                         >
                             <option value="All">All Providers</option>
-                            <option value="Qantas Money">Qantas Money</option>
+                            <option value="Virgin Money">Virgin Money</option>
                             <option value="American Express">American Express</option>
                             <option value="ANZ">ANZ</option>
                             <option value="CommBank">CommBank</option>

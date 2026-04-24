@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Environment variables — API keys live here, NEVER commit
+.env
+.env.local
+.env.production
+
+# Claude Code internals
+.claude/
+
+# Prototype (separate repo)
+prototype/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

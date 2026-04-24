@@ -21,10 +21,10 @@ import {
   calculateGroundSC
 } from '../data';
 import CategoryTabs from '../components/CategoryTabs';
-import PointsRooLogo from '../assets/points-roo.svg';
+import VelocityPointsIcon from '../assets/icons/velocity-points.svg';
 import LeafletMap from '../components/LeafletMap';
 import RewardCard from '../components/RewardCard';
-import KoalaSprite from '../components/KoalaSprite';
+import LionSprite from '../components/LionSprite';
 import TierCard from '../components/TierCard';
 import { maskPts } from '../utils/maskPts';
 import HTMLTypewriter from '../components/HTMLTypewriter';
@@ -32,8 +32,8 @@ import HTMLTypewriter from '../components/HTMLTypewriter';
 // Reward tab config
 const rewardTabsConfig = [
   { key: 'Flights', label: 'REWARD FLIGHTS' },
-  { key: 'Hotels', label: 'QANTAS HOTELS' },
-  { key: 'Activities', label: 'QANTAS ACTIVITIES' },
+  { key: 'Hotels', label: 'VELOCITY HOTELS' },
+  { key: 'Activities', label: 'EXPERIENCES' },
   { key: 'Marketplace', label: 'MARKETPLACE' },
   { key: 'Gift Cards', label: 'GIFT CARDS' },
   { key: 'Entertainment', label: 'ENTERTAINMENT' },
@@ -55,47 +55,47 @@ const useRewardsMap = () =>
 
 const TIER_BENEFITS_DATA = {
   0: [ // Bronze
-    { id: 1, icon: 'lightning', text: 'Earn Qantas Points on Qantas, Jetstar and partner airlines' },
-    { id: 2, icon: 'chair', text: 'Access to Qantas Frequent Flyer member offers' },
-    { id: 3, icon: 'award', text: 'Use points for Classic Flight Rewards' },
-    { id: 4, icon: 'plane', text: 'Manage your bookings easily with the Qantas App' },
+    { id: 1, icon: 'lightning', text: 'Earn Velocity Points on Virgin Australia and partner airlines' },
+    { id: 2, icon: 'chair', text: 'Access to Velocity Frequent Flyer member offers' },
+    { id: 3, icon: 'award', text: 'Use points for Velocity Reward Seats' },
+    { id: 4, icon: 'plane', text: 'Manage your bookings easily with the Virgin Australia App' },
     { id: 5, icon: 'bag', text: 'Earn Status Credits on eligible flights' },
-    { id: 6, icon: 'ticket', text: 'Access to the Rewards Store' },
+    { id: 6, icon: 'ticket', text: 'Access to the Velocity Store for merchandise and gift cards' },
   ],
   1: [ // Silver
-    { id: 1, icon: 'lightning', text: 'Earn 50% more Qantas Points on Qantas, Jetstar and American Airlines flights' },
-    { id: 2, icon: 'chair', text: 'One Qantas Club lounge invitation each year' },
+    { id: 1, icon: 'lightning', text: 'Earn 50% more Velocity Points on Virgin Australia and partner flights' },
+    { id: 2, icon: 'chair', text: 'One Virgin Australia lounge invitation each year' },
     { id: 3, icon: 'award', text: 'Priority check-in counters' },
     { id: 4, icon: 'plane', text: 'Extra checked baggage allowance' },
     { id: 5, icon: 'bag', text: 'Priority baggage tagging' },
     { id: 6, icon: 'ticket', text: 'Waitlist priority for domestic and international flights' },
   ],
   2: [ // Gold
-    { id: 1, icon: 'lightning', text: 'Earn 75% more Qantas Points on Qantas, Jetstar and American Airlines flights' },
+    { id: 1, icon: 'lightning', text: 'Earn 75% more Velocity Points on Virgin Australia and partner flights' },
     { id: 2, icon: 'chair', text: 'Access to over 600 lounges globally' },
-    { id: 3, icon: 'award', text: 'Early access to Classic Flight Reward seats' },
-    { id: 4, icon: 'plane', text: 'On departure upgrades for domestic Qantas operated flights when you use points' },
+    { id: 3, icon: 'award', text: 'Early access to Velocity Reward Seats' },
+    { id: 4, icon: 'plane', text: 'On departure upgrades for domestic Virgin Australia operated flights when you use points' },
     { id: 5, icon: 'bag', text: 'Fast track to ALL - Accor Live Limitless Silver status after one eligible stay***' },
     { id: 6, icon: 'ticket', text: 'Premium boarding' },
   ],
   3: [ // Platinum
-    { id: 1, icon: 'lightning', text: 'Earn 100% more Qantas Points on Qantas, Jetstar and American Airlines flights' },
-    { id: 2, icon: 'chair', text: 'Access to Qantas First and Business lounges' },
-    { id: 3, icon: 'award', text: 'Highest priority for Classic Flight Reward seats' },
+    { id: 1, icon: 'lightning', text: 'Earn 100% more Velocity Points on Virgin Australia and partner flights' },
+    { id: 2, icon: 'chair', text: 'Access to Virgin Australia Business Class lounges' },
+    { id: 3, icon: 'award', text: 'Highest priority for Velocity Reward Seats' },
     { id: 4, icon: 'plane', text: 'Highest priority for flight upgrades' },
     { id: 5, icon: 'bag', text: 'Priority First Class check-in' },
     { id: 6, icon: 'ticket', text: 'Priority baggage tagging (First)' },
   ],
-  4: [ // Platinum One
+  4: [ // Platinum (extended — unused in 4-tier Velocity system)
     { id: 1, icon: 'lightning', text: 'Earn points at the highest status bonus rate' },
     { id: 2, icon: 'chair', text: 'The highest priority for domestic and international flight upgrades' },
     { id: 3, icon: 'award', text: 'Platinum One Team available 24/7' },
     { id: 4, icon: 'plane', text: 'Complimentary Platinum status for a partner' },
     { id: 5, icon: 'bag', text: 'No fees for reward flight changes or cancellations' },
-    { id: 6, icon: 'ticket', text: 'Complimentary Qantas Wine Premium Membership' },
+    { id: 6, icon: 'ticket', text: 'Complimentary Virgin Wines membership' },
   ],
   5: [ // Lifetime Tiers
-    { id: 1, icon: 'lightning', text: 'Lifetime Silver at 7,000 Status Credits' },
+    { id: 1, icon: 'lightning', text: 'Lifetime Silver at 7,000 Status Credits — status that never expires' },
     { id: 2, icon: 'chair', text: 'Lifetime Gold at 14,000 Status Credits' },
     { id: 3, icon: 'award', text: 'Lifetime Platinum at 75,000 Status Credits' },
     { id: 4, icon: 'plane', text: 'Status that never expires' },
@@ -240,7 +240,7 @@ export default function RewardsScreen({
   const [pendingRewardId, setPendingRewardId] = useState(null);
   const [pendingRewardCategory, setPendingRewardCategory] = useState(null);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
-  const [explorerMode, setExplorerMode] = useState(desktopMode ? null : 'rewards');
+  const [explorerMode, setExplorerMode] = useState((desktopMode || isEmbedded) ? null : 'rewards');
   const [explorerTierIndex, setExplorerTierIndex] = useState(null);
 
   useEffect(() => {
@@ -311,19 +311,19 @@ export default function RewardsScreen({
 
   // Auto-minimize on mobile map view
   useEffect(() => {
-    if (!desktopMode && activeTabKey === 'Flights') {
+    if (!desktopMode && !isEmbedded && activeTabKey === 'Flights') {
       setIsMinimized(true);
     } else {
       setIsMinimized(false);
     }
-  }, [activeTabKey, desktopMode]);
+  }, [activeTabKey, desktopMode, isEmbedded]);
 
   const selectedRewardPts = pendingRewardObj?.pts ?? 0;
   const activeDuoCard = current?.activeDuoCard ?? null;
 
   // Sync ActiveDuoCard with favorites and affordability
   useEffect(() => {
-    if (!desktopMode || current?.isShowingHow) return;
+    if (!(desktopMode || isEmbedded) || current?.isShowingHow) return;
 
     // 1. If active one becomes affordable or unset, clear it
     if (activeDuoCard === 'reward-guidance') {
@@ -353,7 +353,7 @@ export default function RewardsScreen({
         }
       }
     }
-  }, [totalAnnualPts, globalSelectedRewardId, favouriteTierIndex, flightTierIndex, activeDuoCard, selectedRewardPts, desktopMode, current?.isShowingHow, current?.hasSelectedReward, current?.dismissedCoachings, updateActiveDuoCard]);
+  }, [totalAnnualPts, globalSelectedRewardId, favouriteTierIndex, flightTierIndex, activeDuoCard, selectedRewardPts, desktopMode, isEmbedded, current?.isShowingHow, current?.hasSelectedReward, current?.dismissedCoachings, updateActiveDuoCard]);
 
   // Handlers
   const handleTabChange = useCallback(key => {
@@ -416,11 +416,11 @@ export default function RewardsScreen({
       }
 
       // Animated transition: scroll to top first
-      if (desktopMode && containerRef?.current) {
+      if ((desktopMode || isEmbedded) && containerRef?.current) {
         containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
-  }, [flightPoints, totalAnnualPts, globalSelectedRewardId, pendingRewardId, updateSelectedRewardId, desktopMode, containerRef, updateActiveDuoCard, onboardingStep, onOnboardingAction, activeDuoCard]);
+  }, [flightPoints, totalAnnualPts, globalSelectedRewardId, pendingRewardId, updateSelectedRewardId, desktopMode, isEmbedded, containerRef, updateActiveDuoCard, onboardingStep, onOnboardingAction, activeDuoCard]);
 
   const handleSelectRewardInList = useCallback((id) => {
     if ((globalSelectedRewardId === id && globalSelectedRewardCategory === activeTabKey) ||
@@ -460,11 +460,11 @@ export default function RewardsScreen({
       }
 
       // Animated transition: scroll to top first
-      if (desktopMode && containerRef?.current) {
+      if ((desktopMode || isEmbedded) && containerRef?.current) {
         containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
-  }, [activeTabKey, rewardsMap, totalAnnualPts, globalSelectedRewardId, globalSelectedRewardCategory, pendingRewardId, pendingRewardCategory, updateSelectedRewardId, desktopMode, containerRef, updateActiveDuoCard, onboardingStep, onOnboardingAction, activeDuoCard]);
+  }, [activeTabKey, rewardsMap, totalAnnualPts, globalSelectedRewardId, globalSelectedRewardCategory, pendingRewardId, pendingRewardCategory, updateSelectedRewardId, desktopMode, isEmbedded, containerRef, updateActiveDuoCard, onboardingStep, onOnboardingAction, activeDuoCard]);
 
   const handleCloseModal = useCallback(() => {
     setPendingRewardId(null);
@@ -522,14 +522,14 @@ export default function RewardsScreen({
         </div>
 
         <div className={`mt-5 flex flex-wrap gap-2.5 shrink-0 ${desktopMode ? '' : 'px-4'}`}>
-          <button className="bg-[#323232] text-white px-4 py-[7px] rounded-full text-[13px] font-medium leading-tight">Classic Rewards</button>
-          <button className="bg-white text-[#323232] border border-[#323232] px-4 py-[7px] rounded-full text-[13px] font-medium leading-tight hover:bg-gray-50 transition-colors">Classic Plus Rewards</button>
+          <button className="bg-[#323232] text-white px-4 py-[7px] rounded-full text-[13px] font-medium leading-tight">Velocity Reward Seats</button>
+          <button className="bg-white text-[#323232] border border-[#323232] px-4 py-[7px] rounded-full text-[13px] font-medium leading-tight hover:bg-gray-50 transition-colors">Any Seat Rewards</button>
           <button className="bg-white text-[#323232] border border-[#323232] px-4 py-[7px] rounded-full text-[13px] font-medium leading-tight hover:bg-gray-50 transition-colors">Points Plus Pay</button>
           <button className="bg-white text-[#323232] border border-[#323232] px-4 py-[7px] rounded-full text-[13px] font-medium leading-tight hover:bg-gray-50 transition-colors">Upgrades</button>
         </div>
 
         <p className={`mt-4 text-[13px] text-[#222] leading-relaxed shrink-0 max-w-[1000px] pb-6 ${desktopMode ? '' : 'px-4'}`}>
-          Classic Flight Rewards are typically the best value reward seats you can book with Qantas Points, but availability is limited. For the best chance of booking a Classic Flight Reward seat, be flexible with dates and times.
+          Velocity Reward Seats are typically the best value reward seats you can book with Velocity Points, but availability is limited. For the best chance of booking a Velocity Reward Seat, be flexible with dates and times.
         </p>
       </div>
     );
@@ -554,7 +554,7 @@ export default function RewardsScreen({
 
   // Helper for coaching/Duo card
   const renderCoachingCard = (type) => {
-    if (!desktopMode || current?.isShowingHow) return null;
+    if (!(desktopMode || isEmbedded) || current?.isShowingHow) return null;
 
     const isReward = type === 'reward';
 
@@ -611,7 +611,7 @@ export default function RewardsScreen({
 
           <div className="shrink-0 relative z-10" style={{ width: '130px', height: '140px' }}>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[10%]">
-              <KoalaSprite variant="magic" scale={0.4} className="origin-bottom" />
+              <LionSprite variant="magic" scale={0.4} className="origin-bottom" />
             </div>
           </div>
 
@@ -694,7 +694,7 @@ export default function RewardsScreen({
                     }
 
                     // Scroll to top to see Duo
-                    if (desktopMode && containerRef?.current) {
+                    if ((desktopMode || isEmbedded) && containerRef?.current) {
                       containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                   }
@@ -738,7 +738,7 @@ export default function RewardsScreen({
           {/* Target PTS Line */}
           <div className="flex items-center text-left mb-4">
             <span className="text-[14px] text-[#323232]">Target</span>
-            <img src={PointsRooLogo} alt="" className="w-[16px] h-[18px] translate-y-[1px] inline mx-1.5" />
+            <img src={VelocityPointsIcon} alt="" className="w-[16px] h-[18px] translate-y-[1px] inline mx-1.5" />
             <span className="text-[15px] font-bold text-[#323232]">
               {current?.opaqueEarn ? maskPts(totalAnnualPts) : totalAnnualPts.toLocaleString()} <span className="text-[10px] font-bold text-[#999999] uppercase">PTS</span>
             </span>
@@ -761,7 +761,7 @@ export default function RewardsScreen({
                 </button>
                 <div className="shrink-0 relative z-10 animate-koala-drop-in" style={{ width: '130px', height: '140px' }}>
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                    <KoalaSprite variant={onboardingStep >= 9 ? "down" : "coins"} scale={onboardingStep >= 9 ? 0.55 : 0.4} className="origin-bottom" />
+                    <LionSprite variant={onboardingStep >= 9 ? "down" : "coins"} scale={onboardingStep >= 9 ? 0.55 : 0.4} className="origin-bottom" />
                   </div>
                 </div>
                 <div className="flex-grow pr-4 z-10 pb-1">
@@ -852,7 +852,7 @@ export default function RewardsScreen({
                 </button>
                 <div className="shrink-0 relative z-10 animate-koala-drop-in" style={{ width: '130px', height: '140px' }}>
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                    <KoalaSprite variant="bling" scale={0.55} className="origin-bottom" />
+                    <LionSprite variant="bling" scale={0.55} className="origin-bottom" />
                   </div>
                 </div>
                 <div className="flex-grow pr-4 z-10 pb-1">
@@ -927,7 +927,7 @@ export default function RewardsScreen({
       )}
 
       {/* Desktop Top Section */}
-      {desktopMode && (
+      {(desktopMode || isEmbedded) && (
         <div className="px-0 pt-0 shrink-0">
           {renderDesktopHeaderContent()}
         </div>
@@ -1026,7 +1026,7 @@ export default function RewardsScreen({
                       <option value="Men's fashion">Men's fashion</option>
                       <option value="Baby, kids and toys">Baby, kids and toys</option>
                       <option value="Beauty, health and personal care">Beauty, health and personal care</option>
-                      <option value="Qantas merchandise">Qantas merchandise</option>
+                      <option value="Virgin Australia merchandise">Virgin Australia merchandise</option>
                       <option value="Electronics">Electronics</option>
                     </select>
                     <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none">
@@ -1074,7 +1074,7 @@ export default function RewardsScreen({
                       <div className="flex flex-col items-end">
                         <div className="flex items-center space-x-1.5 mb-1">
                           <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">USE</span>
-                          <img src={PointsRooLogo} className={`w-3.5 h-3.5 ${isAffordable ? '' : 'opacity-40'}`} />
+                          <img src={VelocityPointsIcon} className={`w-3.5 h-3.5 ${isAffordable ? '' : 'opacity-40'}`} />
                           <span className={`text-[12px] font-medium ${isAffordable ? 'text-[#323232]' : 'text-gray-400'}`}>{r.pts.toLocaleString()}</span>
                           <span className={`text-[10px] font-bold ${isAffordable ? 'text-[#999999]' : 'text-gray-400'}`}>PTS</span>
                         </div>
@@ -1135,7 +1135,7 @@ export default function RewardsScreen({
                             className="text-[12px] text-red-600 font-medium hover:underline flex items-center mb-2"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            View item on Qantas Marketplace
+                            View item on Velocity eStore
                           </a>
                         ) : r.linkText ? (
                           <button
@@ -1169,25 +1169,30 @@ export default function RewardsScreen({
         ) : null}
       </div>
 
-      {/* Footer Container - Hidden in desktopMode */}
-      {!desktopMode && (
+      {/* Footer Container - Hidden in desktopMode or embedded */}
+      {!(desktopMode || isEmbedded) && (
         <div
-          className="shrink-0 bg-white border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] rounded-t-[24px] relative z-[9000] transform transition-all duration-300 ease-out"
-          style={{
+          className={isEmbedded
+            ? 'shrink-0 bg-white overflow-hidden pb-12'
+            : 'shrink-0 bg-white border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] rounded-t-[24px] relative z-[9000] transform transition-all duration-300 ease-out'
+          }
+          style={isEmbedded ? {} : {
             transform: getTransform(),
             transitionDuration: isDragging ? '0ms' : '400ms'
           }}
         >
           {/* Drag Handle */}
-          <div
-            className="flex justify-center pt-3 pb-1 cursor-pointer touch-none"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onClick={toggleMinimized}
-          >
-            <div className="w-[40px] h-1.5 bg-gray-200 rounded-full" />
-          </div>
+          {!isEmbedded && (
+            <div
+              className="flex justify-center pt-3 pb-1 cursor-pointer touch-none"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onClick={toggleMinimized}
+            >
+              <div className="w-[40px] h-1.5 bg-gray-200 rounded-full" />
+            </div>
+          )}
 
           <div className="px-6 pb-6 pt-1">
             {/* Estimator Line */}
@@ -1195,7 +1200,7 @@ export default function RewardsScreen({
               {totalAnnualPts > 0 ? (
                 <div className="flex items-baseline space-x-1 flex-wrap justify-center">
                   <span className="text-[15px] text-[#323232]">Target</span>
-                  <img src={PointsRooLogo} alt="" className="w-[16px] h-[18px] translate-y-0.5" />
+                  <img src={VelocityPointsIcon} alt="" className="w-[16px] h-[18px] translate-y-0.5" />
                   <span className="text-[16px] font-medium text-[#323232] leading-none">
                     {current?.opaqueEarn ? maskPts(totalAnnualPts) : totalAnnualPts.toLocaleString()}
                   </span>
@@ -1226,7 +1231,7 @@ export default function RewardsScreen({
                     <div className="flex items-center space-x-4">
                       {/* Koala Sprite */}
                       <div className="shrink-0 flex items-end justify-center z-10" style={{ width: '130px', height: '140px' }}>
-                        <KoalaSprite variant="down" scale={0.55} className="origin-bottom" />
+                        <LionSprite variant="down" scale={0.55} className="origin-bottom" />
                       </div>
 
                       {/* Content */}

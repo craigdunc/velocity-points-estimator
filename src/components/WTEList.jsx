@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import PointsRooLogo from '../assets/points-roo.svg';
+import VelocityPointsIcon from '../assets/icons/velocity-points.svg';
 import { useSaveSlots } from '../state/useSaveSlots';
 import { maskSpend } from '../utils/maskSpend';
 import { maskPts } from '../utils/maskPts';
@@ -111,7 +111,7 @@ export default function WTEList({
                 <div className="flex items-center space-x-1.5">
                   {!compact && (
                     <img
-                      src={PointsRooLogo}
+                      src={VelocityPointsIcon}
                       alt=""
                       className="w-[18px] h-[18px]"
                     />
@@ -152,9 +152,9 @@ export default function WTEList({
                   {/* Background Track */}
                   <div className="absolute inset-x-1 h-2 bg-gray-200 rounded-full"></div>
 
-                  {/* Active Track (Red part) */}
+                  {/* Active Track */}
                   <div
-                    className="absolute left-1 h-1.5 bg-red-600 rounded-full pointer-events-none"
+                    className="absolute left-1 h-1.5 bg-[#4C2F92] rounded-full pointer-events-none"
                     style={{
                       width: `calc(${(tierIdx / ((w.tiers?.length || 1) - 1)) * 100}% - 4px)`,
                       transition: 'width 0.4s linear'
@@ -166,7 +166,7 @@ export default function WTEList({
                     {(w.tiers || []).map((_, i) => (
                       <div
                         key={i}
-                        className={`w-2 h-2 rounded-full transform translate-y-[1px] ${i <= tierIdx ? 'bg-red-600' : 'bg-gray-400'
+                        className={`w-2 h-2 rounded-full transform translate-y-[1px] ${i <= tierIdx ? 'bg-[#4C2F92]' : 'bg-gray-400'
                           }`}
                         style={{ transition: 'background-color 0.4s linear' }}
                       />
@@ -229,7 +229,7 @@ export default function WTEList({
                     </div>
 
                     {/* Find Out More Logic for Supported Cards */}
-                    {onToggleFindOutMore && [2, 3, 4, 5, 7, 12, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30].includes(w.id) && (
+                    {onToggleFindOutMore && [1, 2, 4, 5, 6, 7, 11, 12, 15, 16, 17].includes(w.id) && (
                       <div>
                         {isFindOutMoreOpen && isExpanded ? (
                           <button

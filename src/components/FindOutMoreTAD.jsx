@@ -31,8 +31,8 @@ export default function FindOutMoreTAD({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                    Trip-A-Deal
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                    Luxury Escapes
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,15 +44,15 @@ export default function FindOutMoreTAD({ onClose }) {
             <div className="flex-grow p-6 overflow-y-auto">
                 <div className="flex items-center mb-6 pl-1 pr-1">
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
-                        <img src={TADLogo} alt="Trip-A-Deal" className="w-8 h-8 object-contain" />
+                        <img src={TADLogo} alt="Luxury Escapes" className="w-8 h-8 object-contain" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                        Trip-A-Deal
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                        Luxury Escapes
                     </h3>
                 </div>
 
                 <p className="text-[14px] text-[#222222] mb-6 leading-relaxed">
-                    Earn 3 Qantas Points per A$1 spent on eligible Trip-A-Deal holiday packages. Choose from bucket-list tours, cruises and resort escapes.
+                    Earn 1 Velocity Point per $1 on luxury holiday packages, cruises, tours, experiences and home & villa stays through Luxury Escapes. Redeem points too (1,000 pts = $7.50). Conditions apply.
                 </p>
 
                 <div className="flex items-center justify-between mb-4">

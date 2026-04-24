@@ -14,14 +14,14 @@ import {
 } from '../data';
 import CategoryTabs from '../components/CategoryTabs';
 import WTEList from '../components/WTEList';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import VelocityHeader from '../components/VelocityHeader';
+import SiteFooter from '../components/SiteFooter';
 import StickyFooter from '../components/StickyFooter';
 import RewardsScreen from './RewardsScreen'; // Import RewardsScreen
-import PointsRooLogo from '../assets/points-roo.svg';
+import VelocityPointsIcon from '../assets/icons/velocity-points.svg';
 import { useViewportMode } from '../hooks/useViewportMode';
-import KoalaSprite from '../components/KoalaSprite';
-import FlightsLogo from '../assets/logos/flights.svg';
+import LionSprite from '../components/LionSprite';
+import FlightsLogo from '../assets/icons/flights.svg';
 import EarnExampleScreen from './EarnExampleScreen';
 import FindOutMoreFlight from '../components/FindOutMoreFlight';
 import FindOutMoreActivities from '../components/FindOutMoreActivities';
@@ -58,7 +58,7 @@ const useRewardsMap = () => useMemo(() => ({
 const ONBOARDING_STEPS = [
   {
     title: "Let's get started!",
-    text: "Select ways of earning Qantas Points to add to your For You page. You can change your selection at any time.",
+    text: "Select ways of earning Velocity Points to add to your For You page. You can change your selection at any time.",
     buttonLabel: "Help me"
   },
   {
@@ -68,7 +68,7 @@ const ONBOARDING_STEPS = [
   },
   {
     title: "Earn with Travel",
-    text: "Earn Qantas Points and Status Credits on flights. And earn more by booking more of your travel with us!",
+    text: "Travel with Virgin and our partners to earn loads of points, and look for ways you might earn with hotels and activities.",
     buttonLabel: "Next"
   },
   {
@@ -118,7 +118,7 @@ const ONBOARDING_STEPS = [
   },
   {
     title: "Set things up, for yourself",
-    text: "So take a look around and select some ways to earn that look good to you. When you’re set, go to the <b>For you</b> page.",
+    text: "So take a look around and select some ways to earn that look good to you. When you’re set, go to the <b>My Velocity</b> page.",
     buttonLabel: "See you soon"
   }
 ];
@@ -208,7 +208,7 @@ const HOW_TO_EARN_STEPS = {
   },
   travel_1_yes: {
     title: () => "Flights",
-    text: "You can select the Qantas & Partner Flights option. Remember to open the dropdown and choose a target amount of points that looks right for you.",
+    text: "You can select the Virgin Australia & Partner Flights option. Remember to open the dropdown and choose a target amount of points that looks right for you.",
     buttons: [{ label: "Done", action: 'travel_2' }]
   },
   travel_2: {
@@ -255,12 +255,12 @@ const HOW_TO_EARN_STEPS = {
   },
   sc_1: {
     title: () => "Set a flights target",
-    text: "The slider here allows you to set a Qantas and Partner Flight target to track towards the tier you want.",
+    text: "The slider here allows you to set a Virgin Australia and Partner Flight target to track towards the tier you want.",
     buttons: [{ label: "OK", action: 'sc_2' }]
   },
   sc_2: {
     title: () => "The calculator is your friend",
-    text: "You can use the Earn Calculator to see how many status credits are earned on a Qantas flight.",
+    text: "You can use the Earn Calculator to see how many status credits are earned on a Virgin Australia flight.",
     buttons: [{ label: "Take me there", action: 'close', url: "https://www.qantas.com/au/en/frequent-flyer/calculators.html" }]
   },
 
@@ -401,6 +401,8 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
   })), []);
 
   const {
+    slots,
+    activeSlotId,
     current,
     updateSelectedRewardId,
     updateSelectedWTEs,
@@ -437,7 +439,26 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
 
   // UI state for filtering/list
   const [activeCategory, setActiveCategory] = useState(categories[0].key);
-  const [expandedId, setExpandedId] = useState(navPayload?.initialExpandId ?? null);
+  const [expandedId, setExpandedId] = useState(navPayload?.initialExpandId ? Number(navPayload.initialExpandId) : null);
+  const [collapsedCategories, setCollapsedCategories] = useState(new Set());
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [duoExpanded, setDuoExpanded] = useState(false);
+  const [duoVisible, setDuoVisible] = useState(false);
+  const [userInteractedWithSlider, setUserInteractedWithSlider] = useState(false);
+  const [autoSliderTier, setAutoSliderTier] = useState(null); // local tier for instant animation
+
+  // During auto-slider animation, override tier 22 with local state for instant visual update
+  const effectiveTierIndexById = autoSliderTier !== null
+    ? { ...tierIndexById, 11: autoSliderTier }
+    : tierIndexById;
+  const [showEarnExample, setShowEarnExample] = useState(false);
+  const [showFindOutMore, setShowFindOutMore] = useState(navPayload?.openMoreInfo ?? false);
+  const [headlineDone, setHeadlineDone] = useState(false);
+  const [typewriterDone, setTypewriterDone] = useState(false);
+
+  const [howPhase, setHowPhase] = useState(null);
+  const [victorySeen, setVictorySeen] = useState(false);
+  const [isVictoryActive, setIsVictoryActive] = useState(false);
 
   // If we came here with a specific WTE to expand, ensure the category is also correct
   useEffect(() => {
@@ -448,28 +469,22 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
         const section = WTE_HIERARCHY.find(s => s.categories.some(c => c.id === wte.subCategory));
         if (section) {
           setActiveCategory(section.id);
+          // NEW: Ensure section is uncollapsed in split view
+          setCollapsedCategories(prev => {
+            const next = new Set(prev);
+            next.delete(section.id);
+            return next;
+          });
         }
+        setExpandedId(Number(navPayload.initialExpandId));
+        if (navPayload.openMoreInfo) setShowFindOutMore(true);
       }
     }
   }, [navPayload]);
+
   const tabsRef = useRef(null);
   const rewardsContainerRef = useRef(null);
   const onboardingCardRef = useRef(null);
-  const [collapsedCategories, setCollapsedCategories] = useState(new Set());
-  const [onboardingStep, setOnboardingStep] = useState(0);
-  const [duoExpanded, setDuoExpanded] = useState(false);
-  const [duoVisible, setDuoVisible] = useState(false);
-  const [userInteractedWithSlider, setUserInteractedWithSlider] = useState(false);
-  const [showEarnExample, setShowEarnExample] = useState(false);
-  const [showFindOutMore, setShowFindOutMore] = useState(false);
-  const [headlineDone, setHeadlineDone] = useState(false);
-  const [typewriterDone, setTypewriterDone] = useState(false);
-
-  const [howPhase, setHowPhase] = useState(null);
-  const [victorySeen, setVictorySeen] = useState(false);
-  const [isVictoryActive, setIsVictoryActive] = useState(false);
-
-
 
   useEffect(() => {
     if (current?.activeDuoCard === 'onboarding') {
@@ -513,7 +528,7 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
     : 0;
 
   const favouriteTierIndex = current?.favouriteTierIndex ?? null;
-  const flightTierIndex = tierIndexById[22] ?? 0;
+  const flightTierIndex = tierIndexById[11] ?? 0;
 
   const groundSC = useMemo(() => calculateGroundSC(selectedWTEs), [selectedWTEs]);
 
@@ -573,8 +588,8 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
   }, [onboardingStep, howPhase]);
 
   const flightsPts = useMemo(() => {
-    const flightWTE = WTEs.find(w => w.id === 22);
-    const tierIdx = tierIndexById[22] ?? 2;
+    const flightWTE = WTEs.find(w => w.id === 11);
+    const tierIdx = tierIndexById[11] ?? 2;
     return flightWTE ? (flightWTE.tiers[tierIdx]?.pts ?? 12000) : 12000;
   }, [tierIndexById]);
   const flightsMonthlyTarget = Math.round(flightsPts / 12);
@@ -599,6 +614,9 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
   useEffect(() => {
     if (onboardingStep !== 4 || current?.activeDuoCard !== 'onboarding' || userInteractedWithSlider) return;
 
+    setExpandedId(11); // Ensure the flights item is open when auto-slider runs
+    setAutoSliderTier(2); // Reset to starting position
+
     let isCancelled = false;
     let timerId = null;
     let currentTier = 2; // Initial position after step 3 is '2'
@@ -608,8 +626,9 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
       if (isCancelled) return;
 
       currentTier += direction;
+      setAutoSliderTier(currentTier); // drive visual immediately via local state
       if (handleTierChangeRef.current) {
-        handleTierChangeRef.current(22, currentTier, true);
+        handleTierChangeRef.current(11, currentTier, true);
       }
 
       if (currentTier <= 0) {
@@ -630,6 +649,7 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
     return () => {
       isCancelled = true;
       clearTimeout(timerId);
+      setAutoSliderTier(null);
     };
   }, [onboardingStep, current?.activeDuoCard, userInteractedWithSlider]);
 
@@ -659,8 +679,18 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
     handleTierChangeRef.current = handleTierChange;
   }, [handleTierChange]);
 
-  const handleSeeMoreClick = useCallback(() => goTo(4), [goTo]);
+  const handleSeeMoreClick = useCallback(() => {
+    scrollToWithOffset(rewardsContainerRef.current);
+  }, []);
   const handleAddToDashboard = useCallback(() => goTo(5), [goTo]);
+
+  const scrollToWithOffset = (el) => {
+    if (!el) return;
+    const nav = document.getElementById('velocity-subnav');
+    const offset = (nav ? nav.offsetHeight : 57) + 8;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
 
   const handleOnboardingAction = useCallback(() => {
     if (onboardingStep === 0) {
@@ -681,29 +711,29 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
       setOnboardingStep(2);
     } else if (onboardingStep === 2) {
       // Step 2 > Step 3 Transition
-      // Demonstrate by selecting 'Qantas & Partner Flights' (id: 22)
+      // Demonstrate by selecting 'Virgin Australia & Partner Flights' (id: 11)
       const currWTEs = current?.selectedWTEs || [];
-      const hasFlights = currWTEs.some(w => String(w.id) === '22');
+      const hasFlights = currWTEs.some(w => String(w.id) === '11');
       if (!hasFlights) {
-        const newSelection = [...currWTEs, { id: 22, level: '2' }]; // Default to middle tier
+        const newSelection = [...currWTEs, { id: 11, level: '2' }]; // Default to middle tier
         updateSelectedWTEs(newSelection);
       }
       setOnboardingStep(prev => prev + 1);
     } else if (onboardingStep === 3) {
       // Step 3 > Step 4 Transition
-      // Demonstrate by opening 'Qantas & Partner Flights' card
-      if (expandedId !== 22) {
-        setExpandedId(22);
+      // Demonstrate by opening 'Virgin Australia & Partner Flights' card
+      if (expandedId !== 11) {
+        setExpandedId(11);
       }
       setTimeout(() => {
-        onboardingCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToWithOffset(onboardingCardRef.current);
       }, 100);
       setOnboardingStep(prev => prev + 1);
     } else if (onboardingStep === 4) {
       // Step 4 > Step 5 Transition ("Choose a reward")
       if (isSplitView && rewardsContainerRef.current) {
         // Scroll the right column container into view
-        rewardsContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToWithOffset(rewardsContainerRef.current);
       }
       setOnboardingStep(prev => prev + 1);
     } else if (onboardingStep === 5) {
@@ -718,7 +748,7 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
         setActiveCategory('shop');
       }
       setTimeout(() => {
-        onboardingCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToWithOffset(onboardingCardRef.current);
       }, 100);
       setOnboardingStep(prev => prev + 1);
     } else if (onboardingStep === 6) {
@@ -733,7 +763,7 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
         setActiveCategory('banking');
       }
       setTimeout(() => {
-        onboardingCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToWithOffset(onboardingCardRef.current);
       }, 100);
       setOnboardingStep(prev => prev + 1);
     } else if (onboardingStep === 7) {
@@ -745,13 +775,13 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
           return next;
         });
         if (rewardsContainerRef.current) {
-          rewardsContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          scrollToWithOffset(rewardsContainerRef.current);
         }
       }
       setOnboardingStep(prev => prev + 1);
       setTimeout(() => {
         if (rewardsContainerRef.current) {
-          rewardsContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          scrollToWithOffset(rewardsContainerRef.current);
         }
       }, 100);
     } else if (onboardingStep >= 8 && onboardingStep <= 11) {
@@ -783,7 +813,7 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
         return next;
       });
       setTimeout(() => {
-        onboardingCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToWithOffset(onboardingCardRef.current);
       }, 100);
     }
 
@@ -808,16 +838,14 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
   const selectedIdsForList = useMemo(() => selectedWTEs.map(w => w.id), [selectedWTEs]);
 
   const renderHeader = () => (
-    <Header
-      isMobile={isMobile}
-      goTo={goTo}
-      currentStepIndex={currentStepIndex}
-      onProfileClick={() => goTo(0)}
-      activeTab="Earn and use points"
-      onTabClick={(tab) => {
-        if (tab === 'For you') goTo(5);
+    <VelocityHeader
+      pointsBalance={current?.currentPtsBalance || 0}
+      memberName={current?.name || slots.find(s => s.id === activeSlotId)?.name || 'Craig Duncan'}
+      activeAccountTab="Earn"
+      onAccountTabClick={(tab) => {
+        if (tab === 'My Velocity') goTo(5);
+        if (tab === 'Profile') goTo(7);
       }}
-      onSettingsClick={() => goTo(7)}
     />
   );
 
@@ -869,18 +897,12 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
 
                     return (
                       <div key={subCat.id} className={idx > 0 ? "border-t border-gray-100" : ""}>
-                        <CategoryHeader
-                          subCat={subCat}
-                          categoryPts={categoryPts}
-                          isGround={isGround}
-                          flightTierIdx={Number(tierIndexById[22] ?? tierIndexById["22"] ?? 2)}
-                        />
                         <WTEList
                           WTEs={WTEs}
                           items={items}
                           selectedIds={selectedIdsForList}
                           expandedId={expandedId}
-                          tierIndexById={tierIndexById}
+                          tierIndexById={effectiveTierIndexById}
                           onToggleSelect={toggleSelectWTE}
                           onToggleExpand={toggleExpandWTE}
                           onTierChange={handleTierChange}
@@ -947,18 +969,12 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
 
           return (
             <div key={subCat.id} className={`mt-2 ${idx > 0 ? "border-t border-gray-100" : ""}`}>
-              <CategoryHeader
-                subCat={subCat}
-                categoryPts={categoryPts}
-                isGround={isGround}
-                flightTierIdx={Number(tierIndexById[22] ?? tierIndexById["22"] ?? 2)}
-              />
               <WTEList
                 WTEs={WTEs}
                 items={items}
                 selectedIds={selectedIdsForList}
                 expandedId={expandedId}
-                tierIndexById={tierIndexById}
+                tierIndexById={effectiveTierIndexById}
                 onToggleSelect={toggleSelectWTE}
                 onToggleExpand={toggleExpandWTE}
                 onTierChange={handleTierChange}
@@ -1001,12 +1017,12 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
   if (!current) return <div className="p-6 text-center">Loading selection...</div>;
 
   return (
-    <div className={`${isSplitView ? 'w-full bg-[#F7F7F7] min-h-screen flex flex-col' : 'max-w-md mx-auto pb-[500px] relative bg-white'}`}>
+    <div className={`${isSplitView ? 'w-full bg-white min-h-screen flex flex-col' : 'max-w-md mx-auto pb-[500px] relative bg-white'}`}>
       {renderHeader()}
       <div className={isSplitView ? "max-w-[1400px] mx-auto px-4 md:px-6 xl:px-8 mt-4 md:mt-6 mb-20 flex-grow w-full" : ""}>
         {isSplitView && (
-          <h1 className="text-[32px] font-light text-[#323232] mt-4 mb-4" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-            Earn and use points
+          <h1 className="text-[28px] font-bold text-[#323232] mt-4 mb-4" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+            Select my ways to earn and redeem points
           </h1>
         )}
 
@@ -1104,11 +1120,11 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
                     <button onClick={() => handleHowAction('close')} className="absolute top-1.5 right-1.5 p-1 text-gray-500 hover:text-gray-700 transition-colors z-10" style={{ marginRight: 0, top: 4, right: 4 }}>
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
-                    <div key={howPhase} className="shrink-0 relative z-10 animate-koala-drop-in" style={{ width: '130px', height: '140px' }}>
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                        <KoalaSprite
+                    <div key={howPhase} className="shrink-0 relative z-10 animate-koala-drop-in" style={{ width: '100px', height: '140px' }}>
+                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+                        <LionSprite
                           variant={howPhase.startsWith('victory') ? 'bling' : (howPhase.includes('travel') || howPhase.includes('sc_')) ? 'travel' : howPhase.includes('bank') ? 'card' : 'shop'}
-                          scale={0.55}
+                          scale={0.33}
                           className="origin-bottom"
                         />
                       </div>
@@ -1123,16 +1139,14 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
                         />
                       </div>
                       <div className="min-h-[50px]">
-                        {headlineDone && (
-                          <p className="text-[13px] text-[#222222] leading-[1.3] mb-4">
-                            <HTMLTypewriter
-                              key={`${howPhase}-text`}
-                              html={HOW_TO_EARN_STEPS[howPhase].text}
-                              speed={30}
-                              onComplete={() => setTypewriterDone(true)}
-                            />
-                          </p>
-                        )}
+                        <p className={`text-[13px] text-[#222222] leading-[1.3] mb-4 ${headlineDone ? '' : 'invisible'}`}>
+                          <HTMLTypewriter
+                            key={headlineDone ? `${howPhase}-text` : `${howPhase}-hidden`}
+                            html={HOW_TO_EARN_STEPS[howPhase].text}
+                            speed={headlineDone ? 30 : 99999}
+                            onComplete={headlineDone ? () => setTypewriterDone(true) : undefined}
+                          />
+                        </p>
                       </div>
                       <div className="flex gap-2 relative min-h-[40px]">
                         {typewriterDone && HOW_TO_EARN_STEPS[howPhase].buttons.map((btn, idx) => (
@@ -1161,11 +1175,11 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
                     <button onClick={() => updateActiveDuoCard(null)} className="absolute top-1.5 right-1.5 p-1 text-gray-500 hover:text-gray-700 transition-colors z-10" style={{ marginRight: 0, top: 4, right: 4 }}>
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
-                    <div key={onboardingStep} className="shrink-0 relative z-10 animate-koala-drop-in" style={{ width: '130px', height: '140px' }}>
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                        <KoalaSprite
+                    <div key={onboardingStep} className="shrink-0 relative z-10 animate-koala-drop-in" style={{ width: '100px', height: '140px' }}>
+                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%)${(onboardingStep === 0 || onboardingStep === 9) ? ' translateY(20px)' : (onboardingStep === 8) ? ' translateY(30px)' : ''}` }}>
+                        <LionSprite
                           variant={['down', 'ah', 'travel', 'tick', 'big', 'map', 'shop', 'card', 'coins', 'down', 'ah', 'bling', 'foryou'][onboardingStep] || 'idle'}
-                          scale={onboardingStep === 8 ? 0.4 : 0.55}
+                          scale={onboardingStep === 8 ? 0.28 : (onboardingStep === 0 || onboardingStep === 9) ? 0.30 : (onboardingStep === 1 || onboardingStep === 10) ? 0.26 : 0.33}
                           className="origin-bottom"
                         />
                       </div>
@@ -1173,21 +1187,21 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
                     <div className="flex-grow pr-4 z-10 pb-1">
                       <div className="text-[18px] text-[#222222] font-medium mb-1.5 leading-tight min-h-[30px]">
                         <HTMLTypewriter
+                          key={`heading-${onboardingStep}`}
                           html={onboardingStep === 0 ? (totalAnnualPts > 0 ? "Let's earn more points" : "Let's get started!") : ONBOARDING_STEPS[onboardingStep].title}
                           speed={40}
                           onComplete={() => setHeadlineDone(true)}
                         />
                       </div>
                       <div className="min-h-[50px]">
-                        {headlineDone && (
-                          <p className="text-[13px] text-[#222222] leading-[1.3] mb-4">
-                            <HTMLTypewriter
-                              html={ONBOARDING_STEPS[onboardingStep].text}
-                              speed={30}
-                              onComplete={() => setTypewriterDone(true)}
-                            />
-                          </p>
-                        )}
+                        <p className={`text-[13px] text-[#222222] leading-[1.3] mb-4 ${headlineDone ? '' : 'invisible'}`}>
+                          <HTMLTypewriter
+                            key={headlineDone ? `body-${onboardingStep}` : `hidden-${onboardingStep}`}
+                            html={ONBOARDING_STEPS[onboardingStep].text}
+                            speed={headlineDone ? 30 : 99999}
+                            onComplete={headlineDone ? () => setTypewriterDone(true) : undefined}
+                          />
+                        </p>
                       </div>
                       <button
                         className={`bg-white text-[15px] font-semibold text-[#E40000] px-6 py-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-all active:scale-95 shadow-sm inline-flex items-center justify-center whitespace-nowrap ${typewriterDone ? 'animate-button-glow visible' : 'invisible'}`}
@@ -1201,7 +1215,7 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
                   {onboardingStep === 5 && (
                     <div className="bg-white rounded-b-[16px] px-6 py-5 shadow-sm flex items-center justify-between relative z-20">
                       <div className="flex flex-col h-full justify-between w-[110px] gap-3">
-                        <div className="font-bold text-[13px] text-[#222] leading-tight pr-2">Qantas &amp; Partner Flights</div>
+                        <div className="font-bold text-[13px] text-[#222] leading-tight pr-2">Virgin Australia &amp; Partner Flights</div>
                         <div>
                           <div className="text-[12px] font-medium text-[#222]">{flightsPts.toLocaleString()} pts</div>
                           <div className="text-[11px] font-bold text-[#222] uppercase tracking-tight">Annual Target</div>
@@ -1242,7 +1256,7 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
                     </button>
                     <div className="shrink-0 relative z-10 animate-koala-drop-in" style={{ width: '130px', height: '140px' }}>
                       <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                        <KoalaSprite
+                        <LionSprite
                           variant="ah"
                           scale={0.55}
                           className="origin-bottom"
@@ -1294,223 +1308,206 @@ export default function WTESelection({ goTo, currentStepIndex, navPayload }) {
               </>
             )}
           </div>
-          {isSplitView && (
-            <div className="flex flex-col flex-grow min-w-0 gap-4">
-              <div ref={rewardsContainerRef} className="flex-grow bg-white rounded-[24px] shadow-sm relative overflow-hidden flex flex-col items-stretch outline-none ring-[1px] ring-gray-200">
-                {showEarnExample && expandedId ? (
-                  <EarnExampleScreen
-                    wte={WTEs.find(w => w.id === expandedId)}
-                    tierIdx={tierIndexById[expandedId] ?? 0}
-                    onClose={() => setShowEarnExample(false)}
+          {/* Rewards Container (Stacked on Mobile, Right Panel on Desktop) */}
+          <div className={isSplitView ? "flex flex-col flex-grow min-w-0 gap-4" : "flex flex-col w-full gap-4 mt-6 pb-8"}>
+            <div
+              ref={rewardsContainerRef}
+              className={isSplitView
+                ? "flex-grow bg-white rounded-[24px] shadow-sm relative overflow-hidden flex flex-col items-stretch outline-none ring-[1px] ring-gray-200"
+                : "flex-grow bg-white rounded-t-[24px] shadow-[0_-4px_16px_rgba(0,0,0,0.05)] pt-2 pb-24 relative overflow-hidden flex flex-col items-stretch w-full border-t border-gray-100"
+              }
+            >
+              {isSplitView && showEarnExample && expandedId ? (
+                <EarnExampleScreen
+                  wte={WTEs.find(w => w.id === expandedId)}
+                  tierIdx={tierIndexById[expandedId] ?? 0}
+                  onClose={() => setShowEarnExample(false)}
+                />
+              ) : isSplitView && showFindOutMore && expandedId === 11 ? (
+                <FindOutMoreFlight onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 16 ? (
+                <FindOutMoreHolidays onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 17 ? (
+                <FindOutMoreTAD onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 1 ? (
+                <FindOutMoreEveryday onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 6 ? (
+                <FindOutMoreNoFeeCards onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 7 ? (
+                <FindOutMoreCards onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 12 ? (
+                <FindOutMoreHotels onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 15 ? (
+                <FindOutMoreCars onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 5 ? (
+                <FindOutMoreWine onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 2 ? (
+                <FindOutMoreBP onClose={() => setShowFindOutMore(false)} />
+              ) : isSplitView && showFindOutMore && expandedId === 4 ? (
+                <FindOutMoreOnlineMall onClose={() => setShowFindOutMore(false)} />
+              ) : (
+                <div className={`w-full h-full overflow-y-auto ${isSplitView ? 'p-4' : 'px-4 pt-2'}`}>
+                  <RewardsScreen
+                    goTo={goTo}
+                    isEmbedded={true}
+                    desktopMode={isSplitView}
+                    containerRef={rewardsContainerRef}
+                    onboardingStep={onboardingStep}
+                    onOnboardingAction={handleOnboardingAction}
+                    onboardingData={ONBOARDING_STEPS[onboardingStep]}
                   />
-                ) : showFindOutMore && expandedId === 22 ? (
-                  <FindOutMoreFlight onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 24 ? (
-                  <FindOutMoreActivities onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 28 ? (
-                  <FindOutMoreHolidays onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 29 ? (
-                  <FindOutMoreTAD onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 30 ? (
-                  <FindOutMoreCruises onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 2 ? (
-                  <FindOutMoreEveryday onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 3 ? (
-                  <FindOutMoreNoFeeCards onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 12 ? (
-                  <FindOutMoreCards onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 19 ? (
-                  <FindOutMoreMarketplace onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 23 ? (
-                  <FindOutMoreHotels onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 25 ? (
-                  <FindOutMoreCars onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 16 ? (
-                  <FindOutMoreWine onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 21 ? (
-                  <FindOutMoreDirect onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 7 ? (
-                  <FindOutMoreBinge onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 4 ? (
-                  <FindOutMoreBP onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 5 ? (
-                  <FindOutMoreWellbeing onClose={() => setShowFindOutMore(false)} />
-                ) : showFindOutMore && expandedId === 20 ? (
-                  <FindOutMoreOnlineMall onClose={() => setShowFindOutMore(false)} />
-                ) : (
-                  <div className="w-full h-full p-4 overflow-y-auto">
-                    <RewardsScreen
-                      goTo={goTo}
-                      isEmbedded={true}
-                      desktopMode={isSplitView}
-                      containerRef={rewardsContainerRef}
-                      onboardingStep={onboardingStep}
-                      onOnboardingAction={handleOnboardingAction}
-                      onboardingData={ONBOARDING_STEPS[onboardingStep]}
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="bg-white rounded-[24px] shadow-sm ring-[1px] ring-gray-200 p-6 flex items-center justify-between shrink-0 transition-all duration-300">
-                <div className="flex-grow pr-4">
-                  <h3 className="text-[16px] text-[#323232] font-normal">Your program, your way</h3>
-                  <p className="text-[13px] text-[#666666]">Track towards your selected options to get more from the your membership.</p>
                 </div>
-                <button
-                  onClick={() => {
-                    if (selectedWTEs.length <= 1 && current?.activeDuoCard !== 'are-you-sure') {
-                      updateActiveDuoCard('are-you-sure');
-                      setHeadlineDone(false);
-                      setTypewriterDone(false);
-                      setTimeout(() => {
-                        onboardingCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }, 50);
-                    } else {
-                      updateActiveDuoCard(null);
-                      goTo(5);
-                    }
-                  }}
-                  className="bg-[#E40000] text-white px-6 py-2.5 rounded-full text-[13px] font-bold flex items-center space-x-2 hover:bg-[#C40000] transition-colors whitespace-nowrap"
-                >
-                  <span>For you</span>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </button>
-              </div>
+              )}
             </div>
-          )}
+            <div className="bg-white rounded-[24px] shadow-sm ring-[1px] ring-gray-200 p-6 flex items-center justify-between shrink-0 transition-all duration-300">
+              <div className="flex-grow pr-4">
+                <h3 className="text-[16px] text-[#323232] font-normal">Your program, your way</h3>
+                <p className="text-[13px] text-[#666666]">Track towards your selected options to get more from the your membership.</p>
+              </div>
+              <button
+                onClick={() => {
+                  if (selectedWTEs.length <= 1 && current?.activeDuoCard !== 'are-you-sure') {
+                    updateActiveDuoCard('are-you-sure');
+                    setHeadlineDone(false);
+                    setTypewriterDone(false);
+                    setTimeout(() => {
+                      scrollToWithOffset(onboardingCardRef.current);
+                    }, 50);
+                  } else {
+                    updateActiveDuoCard(null);
+                    goTo(5);
+                  }
+                }}
+                className="bg-[#E40000] text-white px-6 py-2.5 rounded-full text-[13px] font-bold flex items-center space-x-2 hover:bg-[#C40000] transition-colors whitespace-nowrap"
+              >
+                <span>My Velocity</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      {isSplitView && <Footer />}
-      {isMobile && (
-        <StickyFooter totalPts={totalAnnualPts} selectedReward={selectedReward} hasSelectedReward={current.hasSelectedReward} onExploreRewardsClicked={handleSeeMoreClick} onHomepageClicked={() => {
-          if (selectedWTEs.length <= 1 && current?.activeDuoCard !== 'are-you-sure') {
-            updateActiveDuoCard('are-you-sure');
-            setHeadlineDone(false);
-            setTypewriterDone(false);
-            setTimeout(() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 50);
-          } else {
-            updateActiveDuoCard(null);
-            handleAddToDashboard();
-          }
-        }} initialMinimized={isTargetMode} />
-      )}
+      {isSplitView && <SiteFooter />}
+      {
+        isMobile && (
+          <StickyFooter totalPts={totalAnnualPts} selectedReward={selectedReward} hasSelectedReward={current.hasSelectedReward} onExploreRewardsClicked={handleSeeMoreClick} onHomepageClicked={() => {
+            if (selectedWTEs.length <= 1 && current?.activeDuoCard !== 'are-you-sure') {
+              updateActiveDuoCard('are-you-sure');
+              setHeadlineDone(false);
+              setTypewriterDone(false);
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 50);
+            } else {
+              updateActiveDuoCard(null);
+              handleAddToDashboard();
+            }
+          }} initialMinimized={isTargetMode} />
+        )
+      }
 
       {/* Mobile Overlays */}
-      {!isSplitView && showEarnExample && expandedId && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <EarnExampleScreen
-            wte={WTEs.find(w => w.id === expandedId)}
-            tierIdx={tierIndexById[expandedId] ?? 0}
-            onClose={() => setShowEarnExample(false)}
-          />
-        </div>
-      )}
+      {
+        !isSplitView && showEarnExample && expandedId && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <EarnExampleScreen
+              wte={WTEs.find(w => w.id === expandedId)}
+              tierIdx={tierIndexById[expandedId] ?? 0}
+              onClose={() => setShowEarnExample(false)}
+            />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 22 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreFlight onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 11 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreFlight onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 24 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreActivities onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 16 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreHolidays onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 28 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreHolidays onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 17 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreTAD onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 29 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreTAD onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 1 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreEveryday onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 30 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreCruises onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 7 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreCards onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 2 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreEveryday onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 12 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreHotels onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 12 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreCards onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 15 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreCars onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 19 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreMarketplace onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 5 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreWine onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 23 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreHotels onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 2 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreBP onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 25 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreCars onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 4 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreOnlineMall onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
 
-      {!isSplitView && showFindOutMore && expandedId === 16 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreWine onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
-
-      {!isSplitView && showFindOutMore && expandedId === 7 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreBinge onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
-
-      {!isSplitView && showFindOutMore && expandedId === 4 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreBP onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
-
-      {!isSplitView && showFindOutMore && expandedId === 5 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreWellbeing onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
-
-      {!isSplitView && showFindOutMore && expandedId === 20 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreOnlineMall onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
-
-      {!isSplitView && showFindOutMore && expandedId === 21 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreDirect onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
-
-      {!isSplitView && showFindOutMore && expandedId === 3 && (
-        <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
-          <FindOutMoreNoFeeCards onClose={() => setShowFindOutMore(false)} />
-        </div>
-      )}
+      {
+        !isSplitView && showFindOutMore && expandedId === 6 && (
+          <div className="fixed inset-0 z-50 bg-white shadow-xl overflow-hidden flex flex-col items-stretch">
+            <FindOutMoreNoFeeCards onClose={() => setShowFindOutMore(false)} />
+          </div>
+        )
+      }
     </div>
   );
 }

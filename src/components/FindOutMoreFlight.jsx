@@ -8,7 +8,7 @@ export default function FindOutMoreFlight({ onClose }) {
 
     const partners = [
         { name: 'SkyTrans', id: 'skytrans' },
-        { name: 'Qantas', id: 'qantas' },
+        { name: 'Virgin Australia', id: 'virgin' },
         { name: 'Jetstar', id: 'jetstar' },
         { name: 'Air France', id: 'airfrance' },
         { name: 'Air New Zealand', id: 'airnewzealand' },
@@ -46,7 +46,7 @@ export default function FindOutMoreFlight({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                     Flights
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -61,13 +61,13 @@ export default function FindOutMoreFlight({ onClose }) {
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
                         <img src={FlightsLogo} alt="Flights" className="w-8 h-8" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                        Qantas &amp; Partner Flights
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                        Virgin Australia &amp; Partner Flights
                     </h3>
                 </div>
 
                 <p className="text-[14px] text-[#222222] mb-6 leading-relaxed">
-                    Your Frequent Flyer benefits extend beyond Qantas flights. Qantas is a proud founding member of oneworld, the world’s leading quality airline alliance. When flying with a oneworld member airline, earn Qantas Points and Status Credits on every eligible flight, enjoy seamless travel, as well as membership tier benefits and recognition on your journey. Plus earn or use Qantas Points on eligible flights with our partner airlines and affiliates across a global network.
+                    Your Velocity Frequent Flyer benefits extend beyond Virgin Australia flights. Velocity partners with over 10 major airlines, including Singapore Airlines, Qatar Airways, Etihad, Delta, United, Air Canada, ANA and more. When flying with a Velocity partner airline, earn Velocity Points on every eligible flight and enjoy seamless travel across the globe.
                 </p>
 
                 <h4 className="text-[16px] font-bold text-[#323232] mb-4">Eligible Airlines</h4>

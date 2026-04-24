@@ -36,7 +36,7 @@ export default function HelpModal({ isOpen, onClose }) {
                 </div>
                 <div className="p-6">
                     <p className="text-sm text-gray-600 leading-relaxed">
-                        Select ways of earning Qantas Points to add to your dashboard. You can change your selection at any time.
+                        Select ways of earning Velocity Points to add to your dashboard. You can change your selection at any time.
                     </p>
                 </div>
                 <div className="p-4 bg-gray-50">

@@ -25,16 +25,12 @@ const HTMLTypewriter = ({ html, onComplete, speed = 30 }) => {
             // A rapid pitch drop on a triangle/square wave creates a percussive 'click' or 'tick'
             osc.type = 'triangle';
 
-            // Start mid-high and drop extremely fast to simulate the key bottoming out
-            osc.frequency.setValueAtTime(400 + Math.random() * 100, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.015);
+            osc.frequency.setValueAtTime(320 + Math.random() * 80, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.018);
 
-            // Very short, quiet volume envelope to simulate a muted mechanical switch
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            // Immediate, sharp attack
-            gain.gain.linearRampToValueAtTime(0.01 + (Math.random() * 0.005), audioCtx.currentTime + 0.002);
-            // Extremely rapid decay so it doesn't ring out
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
+            gain.gain.linearRampToValueAtTime(0.04 + (Math.random() * 0.01), audioCtx.currentTime + 0.002);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.025);
 
             osc.connect(gain);
             gain.connect(audioCtx.destination);

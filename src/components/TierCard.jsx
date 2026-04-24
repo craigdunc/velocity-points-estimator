@@ -1,10 +1,10 @@
 import React from 'react';
 
 const TIERS = [
-    { name: 'Bronze', sc: 0, bgColor: '#E40000', textColor: 'text-white' },
-    { name: 'Silver', sc: 300, bgColor: '#A3A5A8', textColor: 'text-white' },
-    { name: 'Gold', sc: 700, bgColor: '#C5A059', textColor: 'text-white' },
-    { name: 'Platinum', sc: 1400, bgColor: '#2D2D2D', textColor: 'text-white' },
+    { name: 'Red', sc: 0, bgColor: '#E40000', textColor: 'text-white' },
+    { name: 'Silver', sc: 250, bgColor: '#A3A5A8', textColor: 'text-white' },
+    { name: 'Gold', sc: 500, bgColor: '#C5A059', textColor: 'text-white' },
+    { name: 'Platinum', sc: 1000, bgColor: '#2D2D2D', textColor: 'text-white' },
     { name: 'Platinum One', sc: 3600, bgColor: '#EAEAEA', textColor: 'text-[#323232]' },
 ];
 
@@ -28,13 +28,7 @@ export default function TierCard({ tierIndex = 2, isFavourite = false, onToggleF
             {/* Top Row */}
             <div className="flex justify-between items-start z-10">
                 {isMini ? <div /> : (
-                    <div className="flex items-center space-x-1.5 opacity-90">
-                        {/* Simple Qantas Roo Silhouette Logo SVG */}
-                        <svg viewBox="0 0 27 24" className={`w-5 h-5 ${isLightText ? 'fill-white' : 'fill-[#E40000]'}`}>
-                            <path d="M26.0576 23.6163C26.0794 23.639 26.1012 23.639 26.1232 23.639C26.167 23.639 26.1891 23.639 26.2329 23.5933C26.2764 23.5476 26.2764 23.4564 26.2329 23.4107C23.6278 20.5556 20.4319 18.249 16.8637 16.7647C15.7692 16.3078 15.7692 16.3078 15.7692 16.3078C15.1999 16.0563 14.8279 15.4856 14.8279 14.8232C14.8935 12.3795 20.4099 12.882 20.9791 11.7171C21.0668 11.5116 21.0668 11.5116 21.0668 11.5116C19.9284 10.4838 18.5929 9.73024 17.1046 9.2964C17.0828 9.36483 17.0387 9.63882 17.3451 10.1641C17.6738 10.7123 16.9949 11.603 15.988 10.6439C15.9004 10.5752 15.9004 10.5752 15.9004 10.5752C8.58908 3.58648 5.21819 8.19991 0.2491 0.0695199C0.20529 0.000828303 0.139698 -0.0218967 0.0738597 0.0238116C0.00826853 0.0695199 -0.0137602 0.137953 0.00826853 0.206386C3.92666 10.0499 11.9384 7.97163 12.8797 17.1528C12.9235 17.4955 13.1644 17.7695 13.4926 17.8152C17.9362 18.546 22.2707 20.4645 26.0358 23.6163H26.0576" />
-                        </svg>
-                        <span className="text-[12px] font-medium tracking-tight">Qantas Frequent Flyer</span>
-                    </div>
+                    <span className="text-[12px] font-medium tracking-tight opacity-90">Velocity Frequent Flyer</span>
                 )}
                 {/* Favorite Heart - Appears on hover or if isFavourite */}
                 <div className={`transition-all duration-300 ${isFavourite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${isMini ? '-mt-1 -mr-1' : ''}`}>
@@ -53,7 +47,7 @@ export default function TierCard({ tierIndex = 2, isFavourite = false, onToggleF
             {/* Bottom Row */}
             <div className="flex justify-between items-end z-10">
                 <div className="flex flex-col">
-                    {!isMini && <span className="text-[11px] font-medium opacity-90 mb-0.5">Status Tier</span>}
+                    {!isMini && <span className="text-[11px] font-medium opacity-90 mb-0.5">Velocity Membership</span>}
                     <span className={`${isMini ? 'text-[17px] font-medium' : 'text-[20px] font-medium'} tracking-tight leading-none`}>{tier.name}</span>
                 </div>
                 {!isMini && tier.sc >= 0 && (

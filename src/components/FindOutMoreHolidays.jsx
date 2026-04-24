@@ -31,7 +31,7 @@ export default function FindOutMoreHolidays({ onClose }) {
     return (
         <div className="w-full h-full flex flex-col items-stretch overflow-hidden bg-white text-left">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
-                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
+                <h2 className="text-[18px] font-light text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
                     Holidays
                 </h2>
                 <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -46,13 +46,13 @@ export default function FindOutMoreHolidays({ onClose }) {
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-full mr-4 flex-shrink-0">
                         <img src={HolidaysLogo} alt="Holidays" className="w-8 h-8" />
                     </div>
-                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                        Qantas Holidays
+                    <h3 className="text-[22px] font-medium text-[#323232]" style={{ fontFamily: 'GT America Extended, sans-serif' }}>
+                        Virgin Australia Holidays
                     </h3>
                 </div>
 
                 <p className="text-[14px] text-[#222222] mb-6 leading-relaxed">
-                    Earn 3 Qantas Points per A$1 spent on eligible holiday packages, combining flights and hotels for your perfect getaway.
+                    Earn 3 Velocity Points per $1 on eligible flight and hotel packages through Virgin Australia Holidays, powered by Hopper. Occasional double Status Credit promotions. Conditions apply.
                 </p>
 
                 <div className="flex items-center justify-between mb-4">

@@ -11,15 +11,22 @@ import {
   SC_VALUES,
 } from '../data';
 import wteSubItems from '../wteSubItems.json';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import VelocityHeader from '../components/VelocityHeader';
+import SiteFooter from '../components/SiteFooter';
+import FlightSearch from '../components/FlightSearch';
+import VelocityPointsPanel from '../components/VelocityPointsPanel';
+import ForYouPanel from '../components/ForYouPanel';
+import YourTrips from '../components/YourTrips';
+import UsingYourPoints from '../components/UsingYourPoints';
+import WhatsNews from '../components/WhatsNews';
 import ConnectedRewardCard from '../components/ConnectedRewardCard';
 import TierCard from '../components/TierCard';
-import KoalaSprite from '../components/KoalaSprite';
-import PointsRooLogo from '../assets/points-roo.svg';
+import LionSprite from '../components/LionSprite';
 import OnboardingStepper from '../components/OnboardingStepper';
 import MonthWrapUpModal from '../components/MonthWrapUpModal';
 import ArrowUpImage from '../assets/images/arrow-up.svg';
+import LionImg from '../assets/images/VelocityLion.png';
+import PanelBgd from '../assets/images/panel-bgd.svg';
 
 import imgRede from '../assets/images/rede.jpg';
 import imgCarpetCourt from '../assets/images/carpetcourt.jpg';
@@ -34,7 +41,6 @@ import imgAdd from '../assets/images/add.png';
 import imgSetup from '../assets/images/setup.png';
 import logoUpgrade from '../assets/logos/upgrade.svg';
 import logoPoints from '../assets/logos/points.svg';
-import logoQantasTail from '../assets/logos/qantas-tail.svg';
 import iconClassicReward from '../assets/icons/classic reward.svg';
 import iconLounge from '../assets/icons/lounge.svg';
 import iconBoardingPass from '../assets/icons/boarding pass.svg';
@@ -187,6 +193,14 @@ export default function Dashboard({ goTo }) {
   const [helpMeWteId, setHelpMeWteId] = useState(null);
   const [helpPhase, setHelpPhase] = useState(0);
 
+  // Gemini state
+  const [geminiQuestion, setGeminiQuestion] = useState('');
+  const [geminiHistory, setGeminiHistory] = useState([]);
+  const [geminiLoading, setGeminiLoading] = useState(false);
+  const [geminiError, setGeminiError] = useState(null);
+  const [geminiInteractionCount, setGeminiInteractionCount] = useState(0);
+  const [geminiIsFinished, setGeminiIsFinished] = useState(false);
+
   const [displayEarnedByWTE, setDisplayEarnedByWTE] = useState(current?.monthlyEarnedByWTE || {});
   const [animationQueue, setAnimationQueue] = useState([]);
   const [activeAnim, setActiveAnim] = useState(null);
@@ -232,10 +246,14 @@ export default function Dashboard({ goTo }) {
   }, [activeAnim, animationQueue]);
 
   const [introPhase, setIntroPhase] = useState(0);
+  const [lionVariant, setLionVariant] = useState('idle');
   const [shootSparks, setShootSparks] = useState(null);
   const [scatterSparks, setScatterSparks] = useState(null);
   const [headlineDone, setHeadlineDone] = useState(false);
   const [typewriterDone, setTypewriterDone] = useState(false);
+  const introPanelRef = useRef(null);
+  const [displayPtsBalance, setDisplayPtsBalance] = useState(null);
+  const [completionBurst, setCompletionBurst] = useState(null);
 
   const isIntroState = !current?.dashboardIntroDismissed;
 
@@ -247,40 +265,74 @@ export default function Dashboard({ goTo }) {
     }
   }, [isIntroState, introPhase, saveState]);
 
+  useEffect(() => {
+    if (introPhase === 2) setLionVariant('ah');
+    if (introPhase === 3) setLionVariant('think');
+  }, [introPhase]);
+
   const handleAcceptWelcome = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    // Start from lion's right paw/shooting position (panel-relative offset)
+    const panelRect = introPanelRef.current?.getBoundingClientRect();
+    const startX = panelRect ? panelRect.left + 220 : e.currentTarget.getBoundingClientRect().left;
+    const startY = panelRect ? panelRect.top + 80 : e.currentTarget.getBoundingClientRect().top;
+
     const headerBtn = document.getElementById('header-points-pill');
     let targetX = window.innerWidth - 100;
     let targetY = 20;
 
     if (headerBtn) {
       const hRect = headerBtn.getBoundingClientRect();
-      targetX = hRect.left + 24;
-      targetY = hRect.top + hRect.height / 2;
+      targetX = hRect.left + 20;
+      targetY = hRect.top + 12;
     }
-
-    const startX = rect.left + rect.width / 2;
-    const startY = rect.top + rect.height / 2;
-
     const tx = targetX - startX;
     const ty = targetY - startY;
 
-    setShootSparks({ startX, startY, tx, ty });
-    playSparkleSound('shoot');
+    // Start lion magic animation immediately
+    setLionVariant('magicshot');
 
+    // After 2s (lion animation complete) → fire sparkle towards points
     setTimeout(() => {
-      setShootSparks(null);
-      setScatterSparks({ x: targetX, y: targetY });
-      playSparkleSound('scatter');
-      saveState({ currentPtsBalance: 100 });
-    }, 1000);
+      setShootSparks({ startX, startY, tx, ty });
+      playSparkleSound('shoot');
 
-    setTimeout(() => {
-      setScatterSparks(null);
-      setIntroPhase(1);
-      setHeadlineDone(false);
-      setTypewriterDone(false);
-    }, 1600);
+      // Sparkle arrives → scatter + animate count up
+      setTimeout(() => {
+        setShootSparks(null);
+        setScatterSparks({ x: targetX, y: targetY });
+        playSparkleSound('scatter');
+        const duration = 1000;
+        const startTime = performance.now();
+        const tick = (now) => {
+          const progress = Math.min((now - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setDisplayPtsBalance(Math.round(100 * eased));
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            setDisplayPtsBalance(null);
+            saveState({ currentPtsBalance: 100 });
+            setCompletionBurst({ x: targetX, y: targetY });
+            playSparkleSound('scatter');
+            // Burst plays for 1s, then phase transitions with a small pause
+            setTimeout(() => setCompletionBurst(null), 1000);
+            setTimeout(() => {
+              setLionVariant('idle');
+              setIntroPhase(1);
+              setHeadlineDone(false);
+              setTypewriterDone(false);
+            }, 1300);
+          }
+        };
+        requestAnimationFrame(tick);
+      }, 700);
+
+      // Clear scatter sparks visuals
+      setTimeout(() => {
+        setScatterSparks(null);
+      }, 1400);
+
+    }, 2000);
   }
 
   useEffect(() => {
@@ -311,8 +363,8 @@ export default function Dashboard({ goTo }) {
     tierIndexById,
   } = current;
 
-  const hasFlights = selectedWTEs?.some((w) => String(w.id) === '22');
-  const flightTierIndex = hasFlights ? (tierIndexById?.[22] ?? 2) : 0;
+  const hasFlights = selectedWTEs?.some((w) => String(w.id) === '11');
+  const flightTierIndex = hasFlights ? (tierIndexById?.[11] ?? 2) : 0;
 
 
 
@@ -334,6 +386,27 @@ export default function Dashboard({ goTo }) {
     'Medium-high earn target',
     'High earn target',
   ];
+
+  /* --- Monthly Sub-Selections --- */
+  const toggleMonthlySelection = (wteId, subId) => {
+    const wteIdStr = String(wteId);
+    const subIdStr = String(subId);
+    const monthlySelections = current?.wteMonthlySelections || {};
+    const wteMonthlyFavs = monthlySelections[wteIdStr] || [];
+
+    const isSelected = wteMonthlyFavs.includes(subIdStr);
+    const updatedWteMonthlyFavs = isSelected
+      ? wteMonthlyFavs.filter(id => id !== subIdStr)
+      : [...wteMonthlyFavs, subIdStr];
+
+    saveState({
+      ...current,
+      wteMonthlySelections: {
+        ...monthlySelections,
+        [wteIdStr]: updatedWteMonthlyFavs
+      }
+    });
+  };
 
   /* --- Time Passes Link --- */
   const handleTimePasses = () => {
@@ -481,67 +554,22 @@ export default function Dashboard({ goTo }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F5F7] font-sans text-[#323232] flex flex-col items-center">
-      <div className="w-full max-w-[1440px] relative flex flex-col pb-0">
-        <Header
-          isMobile={false}
-          onProfileClick={() => goTo(0)}
-          activeTab="For you"
-          onTabClick={(tab) => {
-            if (tab === 'Earn and use points') goTo(3);
+    <div className="min-h-screen bg-white">
+        <VelocityHeader
+          pointsBalance={displayPtsBalance ?? current?.currentPtsBalance ?? 0}
+          memberName={slot?.name || 'Craig Duncan'}
+          activeAccountTab="My Velocity"
+          onAccountTabClick={(tab) => {
+            if (tab === 'Earn') goTo(3);
+            if (tab === 'Profile') goTo(7);
           }}
-          onTimePasses={handleTimePasses}
-          onSettingsClick={() => goTo(7)}
+          showTimePasses={selectedWTEs.length > 0}
+          onTimePassesClick={handleTimePasses}
         />
 
-        <div className="w-full bg-white rounded-b-[64px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] mb-2 relative pb-10 xl:pb-[45px]">
-          <div className="w-full max-w-[1218px] mx-auto px-4 xl:px-0 pt-[40px]">
+        <div className="w-full">
+          <div className="w-full max-w-[1218px] mx-auto px-4 xl:px-6 pt-8">
 
-            {/* --- Top Global Header --- */}
-            <div className="flex justify-between items-start mb-6 relative z-50">
-              <div className="flex flex-col">
-                <h1 className="text-[32px] font-normal text-[#323232] mb-1" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>
-                  Good morning, {slot?.name || 'William'}
-                </h1>
-                <p className="text-[14px] text-[#323232] font-normal" style={{ fontFamily: 'Qantas Sans, sans-serif' }}>Let's get started</p>
-              </div>
-
-              {!isIntroState && (() => {
-                const totalTarget = Object.values(current.monthlyTargetByWTE || {}).reduce((a, b) => a + b, 0);
-                const totalEarned = Object.values(current.monthlyEarnedByWTE || {}).reduce((a, b) => a + b, 0);
-                const progressPercent = totalTarget > 0 ? (totalEarned / totalTarget) * 100 : 0;
-
-                return (
-                  <div className="absolute left-1/2 -translate-x-[55%] flex items-center justify-center pt-4 z-[100]">
-                    <div
-                      onClick={() => setShowMonthlyTargetModal(true)}
-                      className="relative cursor-pointer hover:scale-[1.02] transition-transform active:scale-[0.98] group"
-                    >
-                      <svg className="absolute inset-0 w-full h-full pointer-events-none top-0 left-0" style={{ overflow: 'visible' }}>
-                        <rect x="2" y="2" style={{ width: 'calc(100% - 4px)', height: 'calc(100% - 4px)' }} rx="16" fill="none" stroke="#BCE5E5" strokeWidth="4" />
-                        <rect x="2" y="2" style={{ width: 'calc(100% - 4px)', height: 'calc(100% - 4px)' }} rx="16" fill="none" stroke="#237271" strokeWidth="4" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - Math.min(100, progressPercent)} strokeLinecap="round" className="transition-all duration-1000" />
-                      </svg>
-                      <div className="flex items-baseline bg-[#D7F1F0] rounded-full px-[14px] py-[4px] m-[4px]">
-                        <span className="text-[15px] text-[#323232] mr-1.5 font-normal">{displayMonthName} Target:</span>
-                        <span className="text-[15px] font-bold text-[#323232] tracking-tight">{totalTarget.toLocaleString()}</span>
-                        <span className="text-[11px] font-medium text-[#323232] ml-1 uppercase">PTS</span>
-                      </div>
-                    </div>
-                    {showMonthlyTargetModal && <MonthlyTargetModal />}
-                  </div>
-                );
-              })()}
-
-              <div className="text-right flex items-center gap-5">
-                <div className="text-right flex flex-col justify-center">
-                  <p className="text-[20px] text-[#323232] leading-none mb-1 font-['Ciutadella'] tracking-tight">Bronze</p>
-                  <p className="text-[14px] text-[#323232] leading-none tracking-normal">Frequent Flyer 1234 567 890</p>
-                </div>
-                <div className="w-[52px] h-[52px] bg-[#E40000] rounded-full flex items-center justify-center shadow-sm relative">
-                  <img src={PointsRooLogo} alt="" className="w-7 h-7 brightness-0 invert object-contain" />
-                </div>
-              </div>
-            </div>
 
             {/* --- Lower Panel Content --- */}
             <div className="w-full">
@@ -557,15 +585,12 @@ export default function Dashboard({ goTo }) {
                   <div className="flex flex-col xl:flex-row gap-8 items-center justify-start mt-8">
                     {/* Left: Circle UI */}
                     <div className="flex-shrink-0 flex flex-col items-center justify-center transform scale-90 ml-2 xl:ml-8">
-                      <span className="text-[14px] font-bold text-[#666] text-center mb-3 max-w-[120px] leading-tight flex items-center justify-center min-h-[40px]">
-                        {wte.name}
-                      </span>
                       <div className="relative w-[120px] h-[120px] mb-2">
                         <svg className="w-full h-full transform -rotate-90">
                           <circle cx="60" cy="60" r="56" fill="none" stroke="#F3F5F7" strokeWidth="4" />
                           <circle
                             cx="60" cy="60" r="56" fill="none"
-                            stroke="#E40000"
+                            stroke="#4C2F92"
                             strokeWidth="4"
                             strokeDasharray={351.8}
                             strokeDashoffset={351.8 - (351.8 * percent) / 100}
@@ -579,11 +604,14 @@ export default function Dashboard({ goTo }) {
                           <span className="text-[16px] font-medium text-gray-500 leading-none">{earned > 0 ? earned.toLocaleString() : target.toLocaleString()}</span>
                         </div>
                       </div>
+                      <span className="text-[13px] font-medium text-[#323232] text-center max-w-[120px] leading-tight">
+                        {wte.name}
+                      </span>
                     </div>
 
-                    {/* Middle: Koala */}
-                    <div className="flex-shrink-0 flex items-center justify-center transform scale-90 -mr-4">
-                      <KoalaSprite variant="idle" scale={1} />
+                    {/* Middle: Lion */}
+                    <div className="flex-shrink-0 flex items-center justify-center -mr-4">
+                      <LionSprite variant="idle" targetHeight={160} />
                     </div>
 
                     {/* Right: Text and buttons */}
@@ -621,6 +649,7 @@ export default function Dashboard({ goTo }) {
                         const favs = current?.wteFavourites?.[wte.id] || [];
                         const hasFavs = favs.length > 0;
                         const subNamesMap = wteSubItems[wte.id] || {};
+                        const subSelectionsPossible = Object.keys(subNamesMap).length > 0;
 
                         return (
                           <div className={`animate-duo-entrance flex items-start ${hasFavs ? 'gap-10 w-full min-w-[700px]' : ''}`}>
@@ -631,7 +660,11 @@ export default function Dashboard({ goTo }) {
                               <div className="min-h-[48px]">
                                 {hasFavs ? (
                                   <p className="text-[15px] text-[#323232] leading-relaxed mb-6 max-w-[320px]">
-                                    Which of these ways to earn might you be able to use this month? Select
+                                    Which of these ways to earn might you be able to use this month? Narrow down by selecting some options.
+                                  </p>
+                                ) : subSelectionsPossible ? (
+                                  <p className="text-[15px] text-[#323232] leading-relaxed mb-6 max-w-[400px]">
+                                    You haven't made any sub-selections for this category. Go to the Earn and Use points page to make your selections to unlock personalised tips!
                                   </p>
                                 ) : (
                                   <p className="text-[15px] text-[#323232] leading-relaxed mb-6 max-w-[400px]">
@@ -642,12 +675,61 @@ export default function Dashboard({ goTo }) {
                               <div className="flex items-center gap-6">
                                 <button
                                   className={`bg-white text-[#E40000] px-8 py-2.5 rounded-full border border-[1px] font-medium text-[15px] hover:bg-red-50 transition-all active:scale-95 ${hasFavs ? 'border-gray-200' : 'border-[#E40000] font-semibold shadow-sm'}`}
-                                  onClick={() => setHelpPhase(2)}
+                                  onClick={() => {
+                                    if (!hasFavs && subSelectionsPossible) {
+                                      goTo(3, { initialExpandId: Number(wte.id), openMoreInfo: true }); // go to earn and use points with WTE expanded
+                                    } else {
+                                      setHelpPhase(2);
+
+                                      // Pre-fetch the conversation on entry to Tip 2 so it's ready for Tip 3
+                                      setGeminiLoading(true); setGeminiError(null);
+
+                                      const favsInfo = current?.wteFavourites?.[wte.id] || [];
+                                      const subNamesInf = wteSubItems[wte.id] || {};
+                                      const monthlyFavs = current?.wteMonthlySelections?.[wte.id] || [];
+                                      const effectiveFavsInfo = monthlyFavs.length > 0 ? monthlyFavs : favsInfo;
+                                      const favNamesInfo = effectiveFavsInfo.map(id => subNamesInf[id]?.name || subNamesInf[id]).join(', ');
+
+                                      const pointsGap = Math.max(0, target - earned);
+
+                                      const targetRewardName = selectedReward ? (selectedReward.destCity || selectedReward.reward) : 'your next reward';
+                                      let initialSystemPrompt = `You are the Koala character and a friendly guide for ${slot?.name || 'James'}. You have already introduced yourself and established a rapport earlier. You are curious and friendly, helping them clarify their points-earning plans.
+CRITICAL SYSTEM INSTRUCTION: DO NOT GIVE ADVICE. DO NOT MENTION EARNING TABLES, POINTS MECHANICS, FARE CLASSES, OR qantas.com. NEVER advise the user on how to earn points. This is strictly forbidden.
+The member explicitly selected these partners: ${favNamesInfo || 'None'}.
+The member has a points gap of ${pointsGap.toLocaleString()} points this month on ${wte.name} to help them reach their reward of: ${targetRewardName}.
+
+Your ONLY task is to:
+1. Speak as the Koala who has already met the member. Skip introductory filler like "it's fantastic you're focusing on..." or "great that you are looking to earn points...".
+2. Briefly acknowledge their selections and the gap of ${pointsGap} pts.
+3. Ask ONE clear, engaging, open-ended question about their possible intent for this month—how exactly are they going to spend money through ${wte.name}?
+
+Keep your entire response to EXACTLY 2-3 sentences. ALWAYS end with ONE clear question.`;
+
+                                      const uName = slot?.name || 'James';
+                                      fetch('/api/chat', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          question: `Hi, I am ${uName}. No need for a formal welcome—we've already met earlier. Briefly acknowledge my selected partners and the gap, then ask me an engaging question about how I'm going to spend money with ${wte.name} this month to reach my reward.`,
+                                          wteName: wte?.name,
+                                          history: [],
+                                          systemPrompt: initialSystemPrompt
+                                        })
+                                      })
+                                        .then(r => r.json())
+                                        .then(d => {
+                                          if (d.error) throw new Error(d.error);
+                                          setGeminiHistory([{ role: 'assistant', content: d.answer }]);
+                                        })
+                                        .catch(err => setGeminiError(err.message))
+                                        .finally(() => setGeminiLoading(false));
+                                    }
+                                  }}
                                 >
-                                  {hasFavs ? "Done" : "OK"}
+                                  {(!hasFavs && subSelectionsPossible) ? "Choose" : "Done"}
                                 </button>
                                 <button
-                                  onClick={() => { setHelpMeWteId(null); setHelpPhase(0); }}
+                                  onClick={() => { setHelpMeWteId(null); setHelpPhase(0); setGeminiHistory([]); setGeminiInteractionCount(0); setGeminiIsFinished(false); }}
                                   className="text-[#E40000] text-[15px] font-normal hover:underline"
                                 >
                                   Skip
@@ -661,14 +743,30 @@ export default function Dashboard({ goTo }) {
                                 <div className="absolute top-0 right-0 w-[4px] h-full bg-[#E5E5E5] rounded-full" />
 
                                 {favs.map(subId => {
+                                  const isSelected = (current?.wteMonthlySelections?.[wte.id] || []).includes(String(subId));
                                   let itemData = subNamesMap[subId] || { name: `Item ${subId}`, category: "" };
                                   if (typeof itemData === 'string') itemData = { name: itemData, category: "" };
                                   return (
-                                    <div key={subId} className="bg-[#fafafa] px-5 py-3.5 min-h-[64px] flex flex-col justify-center cursor-pointer hover:bg-gray-50 transition-colors shrink-0 mr-4 border border-transparent hover:border-gray-200">
-                                      <span className="text-[14px] font-medium text-[#323232] leading-tight mb-0.5">{itemData.name}</span>
-                                      {itemData.category && (
-                                        <span className="text-[12px] font-normal text-[#888] leading-none mt-1">{itemData.category}</span>
-                                      )}
+                                    <div
+                                      key={subId}
+                                      onClick={() => toggleMonthlySelection(wte.id, subId)}
+                                      className={`px-5 py-3.5 min-h-[64px] flex flex-col justify-center cursor-pointer transition-colors shrink-0 mr-4 border rounded-[4px] ${isSelected ? 'bg-red-50 border-[#E40000]' : 'bg-[#fafafa] border-transparent hover:bg-gray-50 hover:border-gray-200'}`}
+                                    >
+                                      <div className="flex justify-between items-center w-full">
+                                        <div className="flex flex-col pr-4">
+                                          <span className={`text-[14px] font-medium leading-tight mb-0.5 ${isSelected ? 'text-[#E40000]' : 'text-[#323232]'}`}>{itemData.name}</span>
+                                          {itemData.category && (
+                                            <span className={`text-[12px] font-normal leading-none mt-1 ${isSelected ? 'text-[#E40000]/80' : 'text-[#888]'}`}>{itemData.category}</span>
+                                          )}
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${isSelected ? 'border-[#E40000] bg-[#E40000]' : 'border-gray-300'}`}>
+                                          {isSelected && (
+                                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                          )}
+                                        </div>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -676,290 +774,464 @@ export default function Dashboard({ goTo }) {
                             )}
                           </div>
                         );
-                      })() : (
-                        <div className="animate-duo-entrance">
-                          <h2 className="text-[20px] text-[#323232] font-normal mb-3 leading-snug">
-                            Tip 2: Look out for multipliers
-                          </h2>
-                          <div className="min-h-[48px]">
-                            <p className="text-[15px] text-[#323232] leading-relaxed mb-6 max-w-[400px]">
-                              Keep an eye out for promotional bonus points campaigns across {wte.name}.
-                            </p>
+                      })() : helpPhase === 2 ? (() => {
+                        const favs = current?.wteFavourites?.[wte.id] || [];
+                        const subNamesMap = wteSubItems[wte.id] || {};
+                        return (
+                          <div className="animate-duo-entrance">
+                            <h2 className="text-[20px] text-[#323232] font-normal mb-3 leading-snug">
+                              Tip 2: Look out for multipliers
+                            </h2>
+                            <div className="min-h-[48px] mb-4">
+                              {favs.length > 0 ? (
+                                <div>
+                                  <p className="text-[15px] mb-2 text-[#323232]">Here are some current promotions based on your selections:</p>
+                                  <ul className="list-disc pl-5 text-[14px] text-[#323232] space-y-2 max-w-[400px]">
+                                    {favs.slice(0, 2).map((subId) => {
+                                      let itemData = subNamesMap[subId] || { name: `Item ${subId}` };
+                                      if (typeof itemData === 'string') itemData = { name: itemData };
+                                      return (
+                                        <li key={subId}>
+                                          <strong>{itemData.name}:</strong> Earn double points this weekend when you link your account.
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              ) : (
+                                <p className="text-[15px] text-[#323232] leading-relaxed max-w-[400px]">
+                                  Keep an eye out for promotional bonus points campaigns across {wte.name}.
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-6">
+                              <button
+                                className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                                onClick={() => {
+                                  setHelpPhase(3);
+                                }}
+                              >
+                                Next
+                              </button>
+                              <button
+                                onClick={() => { setHelpMeWteId(null); setHelpPhase(0); setGeminiQuestion(''); setGeminiHistory([]); setGeminiInteractionCount(0); setGeminiIsFinished(false); }}
+                                className="text-[#E40000] text-[15px] font-normal hover:underline"
+                              >
+                                Skip
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-6">
-                            <button
-                              className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
-                              onClick={() => { setHelpMeWteId(null); setHelpPhase(0); }}
-                            >
-                              Got it
-                            </button>
-                            <button
-                              onClick={() => { setHelpMeWteId(null); setHelpPhase(0); }}
-                              className="text-[#E40000] text-[15px] font-normal hover:underline"
-                            >
-                              Skip
-                            </button>
+                        );
+                      })() : helpPhase === 3 ? (() => {
+                        const handleSend = () => {
+                          if (!geminiQuestion.trim() || geminiLoading) return;
+
+                          const uName = slot?.name || 'James';
+                          setGeminiLoading(true); setGeminiError(null);
+                          const newHistory = [...geminiHistory, { role: 'user', content: geminiQuestion }];
+                          setGeminiHistory(newHistory);
+                          const currentStr = geminiQuestion;
+                          setGeminiQuestion('');
+
+                          const favs = current?.wteFavourites?.[wte.id] || [];
+                          const subNamesMap = wteSubItems[wte.id] || {};
+                          const monthlyFavsDynamic = current?.wteMonthlySelections?.[wte.id] || [];
+                          const effectiveFavsDynamic = monthlyFavsDynamic.length > 0 ? monthlyFavsDynamic : favs;
+                          const favNames = effectiveFavsDynamic.map(id => subNamesMap[id]?.name || subNamesMap[id]).join(', ');
+
+                          const interactionsDone = geminiInteractionCount + 1;
+                          setGeminiInteractionCount(interactionsDone);
+
+                          const pointsGap = Math.max(0, target - earned);
+                          const targetRewardName = selectedReward ? (selectedReward.destCity || selectedReward.reward) : 'your next reward';
+                          let dynamicSystemPrompt = `You are the friendly Koala guide for ${uName}. You are a curious interviewer, NOT an expert advisor.
+CRITICAL SYSTEM INSTRUCTION: DO NOT GIVE ADVICE. DO NOT MENTION EARNING TABLES, POINTS MECHANICS, FARE CLASSES, OR qantas.com. NEVER advise the user on how to earn points. This is strictly forbidden.
+The member explicitly selected these partners: ${favNames || 'None'}.
+The member has a points gap of ${pointsGap.toLocaleString()} points this month to reach their reward of: ${targetRewardName}.
+
+Your ONLY task is to:
+1. Actively listen and briefly validate their previous answer in 1 short sentence.
+2. Remind them gently that it takes time for points to reach their account, so the key thing is to keep using Velocity and partners and the points will come in.
+3. Make ONE final pass at discovering a specific spend intent. Ask exactly what they are going to do next and when that is (e.g., next week? the week after?).
+
+ALWAYS end your response with ONE clear, engaging question. Keep your entire response to EXACTLY 2-3 sentences.`;
+
+                          let sentQuestion = currentStr;
+
+                          if (interactionsDone === 1) {
+                            sentQuestion += `\n\n[SYSTEM INSTRUCTION TO AI: This is round 2! You MUST respond by asking when I am purchasing or what my next actionable step is. DO NOT give advice on earning tables, mechanics, or fare classes. Keep response to exactly 2 sentences, ALWAYS ending with a question.]`;
+                          }
+                          if (interactionsDone >= 2) {
+                            dynamicSystemPrompt = `You are the friendly Koala guide for ${uName}.
+CRITICAL INSTRUCTION: This is the final interaction. Briefly validate their plan and express warm confidence in their progress.
+Mention that by sticking to this plan and booking or purchasing through ${wte.name} and other partners, they'll be well on their way to ${targetRewardName} by the end of the year.
+Keep it encouraging and warm. KEEP IT TO EXACTLY 2 SENTENCES. Do not ask any more questions.`;
+                            sentQuestion += `\n\n[SYSTEM INSTRUCTION TO AI: Final interaction! Wrap up warmly. Validate their plan and remind them that they'll reach ${targetRewardName} by sticking to their earn strategy. 2 sentences max. DO NOT ask a question.]`;
+                            setGeminiIsFinished(true);
+                          }
+
+                          fetch('/api/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              question: sentQuestion,
+                              wteName: wte?.name,
+                              history: geminiHistory,
+                              systemPrompt: dynamicSystemPrompt
+                            })
+                          })
+                            .then(r => r.json())
+                            .then(d => {
+                              if (d.error) throw new Error(d.error);
+                              setGeminiHistory([...newHistory, { role: 'assistant', content: d.answer }]);
+                            })
+                            .catch(err => setGeminiError(err.message))
+                            .finally(() => setGeminiLoading(false));
+                        };
+
+                        return (
+                          <div className="animate-duo-entrance flex-1">
+                            <h2 className="text-[20px] text-[#323232] font-normal mb-3 leading-snug">
+                              Earning {Math.max(0, target - earned).toLocaleString()} points with {wte.name} this month
+                            </h2>
+
+                            {(geminiHistory.length > 0 || geminiLoading) && (
+                              <div className="flex flex-col gap-3 mb-4 max-h-[160px] overflow-y-auto pr-2 scrollbar-hide">
+                                {geminiHistory.map((msg, i) => (
+                                  <div key={i} className={`p-0 text-[14px] leading-relaxed ${msg.role === 'user' ? 'self-end bg-[#fafafa] px-3 py-2 rounded-lg text-gray-500 max-w-[85%]' : 'self-start text-[#323232]'} `}>
+                                    <span dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>') }} />
+                                  </div>
+                                ))}
+                                {geminiLoading && (
+                                  <div className="p-0 text-[14px] self-start text-[#888]">
+                                    <em>Coach is thinking...</em>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {geminiError && (
+                              <div className="text-[#E40000] text-[14px] mb-4">
+                                {geminiError}
+                              </div>
+                            )}
+
+                            {!geminiIsFinished ? (
+                              <div className="flex gap-3 mb-4 items-center">
+                                <div className="flex-1 bg-white border border-gray-200 rounded-full flex items-center pr-1.5 pl-4 py-1 flex-shrink shadow-sm hover:border-[#E40000] focus-within:border-[#E40000] transition-colors relative min-w-0">
+                                  <input
+                                    type="text"
+                                    value={geminiQuestion}
+                                    onChange={e => setGeminiQuestion(e.target.value)}
+                                    // Make sure it doesn't double trigger
+                                    onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
+                                    placeholder="Answer here"
+                                    className="flex-1 text-[14px] text-[#323232] outline-none min-w-0 bg-transparent placeholder-gray-400 italic py-1"
+                                    disabled={geminiLoading}
+                                  />
+                                  <button
+                                    onClick={handleSend}
+                                    disabled={geminiLoading || !geminiQuestion.trim()}
+                                    className="w-[28px] h-[28px] mr-0 ml-2 flex items-center justify-center rounded-full bg-[#E40000] text-white flex-shrink-0 disabled:opacity-50 transition-colors"
+                                  >
+                                    {geminiLoading ? (
+                                      <svg className="animate-spin w-3 h-3 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                      </svg>
+                                    ) : (
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                </div>
+                                <button
+                                  onClick={() => { setHelpMeWteId(null); setHelpPhase(0); setGeminiQuestion(''); setGeminiHistory([]); setGeminiInteractionCount(0); setGeminiIsFinished(false); }}
+                                  className="text-[#E40000] text-[13px] font-normal hover:underline ml-2"
+                                >
+                                  Skip
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="mt-4 flex">
+                                <button
+                                  onClick={() => { setHelpMeWteId(null); setHelpPhase(0); setGeminiQuestion(''); setGeminiHistory([]); setGeminiInteractionCount(0); setGeminiIsFinished(false); }}
+                                  className="bg-[#E40000] text-white px-8 py-2 rounded-full font-semibold text-[15px] hover:bg-[#c40000] transition-all active:scale-95 shadow-sm"
+                                >
+                                  Done
+                                </button>
+                                <button
+                                  onClick={() => { setHelpMeWteId(null); setHelpPhase(0); setGeminiQuestion(''); setGeminiHistory([]); setGeminiInteractionCount(0); setGeminiIsFinished(false); }}
+                                  className="text-[#E40000] text-[13px] font-normal hover:underline ml-4"
+                                >
+                                  Close
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )}
+                        );
+                      })() : null}
                     </div>
                   </div>
                 );
               })() : isIntroState ? (
-                <div className="flex flex-col xl:flex-row gap-8 items-center justify-start mt-8">
-                  {/* Left: Koala Sprite */}
-                  <div className="flex-shrink-0 flex items-center justify-center transform scale-90">
-                    <KoalaSprite variant={introPhase === 0 ? "magic" : "idle"} scale={introPhase === 0 ? 0.6 : 1} />
-                  </div>
+                <div className="w-full max-w-[1100px] mx-auto">
+                  <div ref={introPanelRef} className="relative rounded-xl overflow-hidden border border-gray-200" style={{ height: '340px' }}>
 
-                  {/* Middle: Intro Content */}
-                  <div className="flex-grow max-w-[600px] min-h-[160px]">
-                    {introPhase === 0 ? (
-                      <>
-                        <h2 className="text-[20px] text-[#323232] font-normal mb-3 min-h-[30px]">
-                          <HTMLTypewriter html={`Welcome to the program, ${slot?.name.split(' ')[0] || 'Member'}!`} speed={40} onComplete={() => setHeadlineDone(true)} />
-                        </h2>
-                        <div className="min-h-[48px]">
-                          {headlineDone && (
-                            <p className="text-[15px] text-gray-800 leading-relaxed mb-4">
-                              <HTMLTypewriter html="I'd like to give you 100 pts as a welcome gift" speed={40} onComplete={() => setTypewriterDone(true)} />
-                            </p>
-                          )}
-                        </div>
-                        <div className={`flex mt-4 ${typewriterDone ? 'animate-duo-entrance visible' : 'invisible'}`}>
+                    {/* SVG background */}
+                    <img src={PanelBgd} alt="" className="absolute inset-0 w-full h-full" style={{ objectFit: 'fill' }} />
+
+                    {/* Phase 0: member card — stays in DOM to fade out */}
+                    <div
+                      className="absolute top-5 right-6 hidden sm:flex flex-col justify-between w-[180px] h-[110px] rounded-xl p-4 text-white text-right pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(135deg, #7A1515 0%, #C90000 100%)',
+                        opacity: introPhase <= 1 ? 1 : 0,
+                        transition: 'opacity 0.5s ease',
+                      }}
+                    >
+                      <div className="flex items-center justify-end gap-1.5 text-[11px] font-medium opacity-90">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        {slot?.memberNumber || '1227 062 631'}
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-white/70 mb-0.5">Member since 2024</p>
+                        <p className="text-[28px] leading-none" style={{ fontWeight: 100 }}>Red</p>
+                      </div>
+                    </div>
+
+                    {/* Phases 1-5: Choose / Add / Set up cards — staggered fade-in */}
+                    <div className="absolute right-16 hidden sm:flex items-end gap-4" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+                      {[
+                        { img: imgChoose, label: 'Choose', activeAt: 3 },
+                        { img: imgAdd,    label: 'Add',    activeAt: 4 },
+                        { img: imgSetup,  label: 'Set up', activeAt: 5 },
+                      ].map(({ img, label, activeAt }, idx) => {
+                          const isActive = introPhase === activeAt;
+                          const isPast   = introPhase > activeAt;
+                          return (
+                            <div
+                              key={label}
+                              className={`flex flex-col items-center transition-all duration-300 ${isPast ? 'opacity-40 grayscale' : ''}`}
+                              style={{
+                                opacity: introPhase >= 2 ? undefined : 0,
+                                animation: introPhase >= 2 ? `intro-card-fadein 0.4s ease forwards ${idx * 160}ms` : 'none',
+                              }}
+                            >
+                              <div
+                                className={`w-[96px] h-[96px] rounded-[16px] flex items-center justify-center overflow-hidden mb-2 transition-all duration-300 ${isActive ? 'bg-white' : 'bg-[#F3F3F3]'}`}
+                                style={isActive ? { outline: '2.5px solid #4C2F92', boxShadow: '0 4px 12px rgba(76,47,146,0.18)' } : {}}
+                              >
+                                <img src={img} alt={label} className="w-full h-full object-cover" />
+                              </div>
+                              <span className={`text-[12px] font-semibold ${isActive ? 'text-[#4C2F92]' : 'text-[#aaaaaa]'}`}>{label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                    {/* Lion — left, bottom-anchored so feet stay fixed across variants */}
+                    <div className="absolute" style={{ left: '28px', bottom: lionVariant === 'magicshot' ? '-6px' : '43px', transform: lionVariant === 'magicshot' ? 'translateX(-72px)' : 'translateX(20px)' }}>
+                      <LionSprite
+                        variant={lionVariant}
+                        targetHeight={lionVariant === 'magicshot' ? 345 : 254}
+                        maxLoops={lionVariant === 'ah' || lionVariant === 'think' ? 1 : 3}
+                        onComplete={lionVariant === 'ah' || lionVariant === 'think' ? () => setLionVariant('idle') : null}
+                      />
+                    </div>
+
+                    {/* Text block — right boundary shifts when cards are present */}
+                    <div className="absolute" style={{ left: '260px', right: introPhase === 0 ? '210px' : '455px', top: '50%', transform: 'translateY(-50%)' }}>
+
+                      {introPhase === 0 && (
+                        <>
+                          <h2 className="text-[22px] font-bold text-[#1d1c1f] mb-2 leading-tight">
+                            Welcome to the program, {slot?.name?.split(' ')[0] || 'Kim'}!
+                          </h2>
+                          <p className="text-[14px] text-[#575559] mb-5 min-h-[20px]">
+                            <HTMLTypewriter html="I'd like to give you 100 pts as a welcome gift." speed={25} />
+                          </p>
                           <button
                             onClick={handleAcceptWelcome}
-                            className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
-                          >
-                            Accept 100 pts
-                          </button>
-                        </div>
-                      </>
-                    ) : introPhase === 1 ? (
-                      <>
-                        <h2 className="text-[20px] text-[#323232] font-normal mb-3 min-h-[30px]">
-                          <HTMLTypewriter html="OK, 100 pts for you!" speed={40} onComplete={() => setHeadlineDone(true)} />
-                        </h2>
-                        <div className="min-h-[48px]">
-                          {headlineDone && (
-                            <p className="text-[15px] text-gray-800 leading-relaxed mb-8">
-                              <HTMLTypewriter
-                                html="That's better. Starting from zero is no fun at all."
-                                speed={30}
-                                onComplete={() => setTypewriterDone(true)}
-                              />
+                            className="border border-[#4C2F92] text-[#4C2F92] text-[13px] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#4C2F92] hover:text-white transition-colors"
+                          >Accept 100 pts</button>
+                        </>
+                      )}
+
+                      {introPhase === 1 && (
+                        <>
+                          <h2 className="text-[22px] font-bold text-[#1d1c1f] mb-2 leading-tight min-h-[30px]">
+                            <HTMLTypewriter html="OK, 100 pts for you!" speed={40} onComplete={() => setHeadlineDone(true)} />
+                          </h2>
+                          <div className="min-h-[44px] mb-4">
+                            {headlineDone && (
+                              <p className="text-[14px] text-[#575559] leading-relaxed">
+                                <HTMLTypewriter html="That's better. Starting from zero is no fun at all." speed={30} onComplete={() => setTypewriterDone(true)} />
+                              </p>
+                            )}
+                          </div>
+                          <div className={`flex items-center gap-5 ${typewriterDone ? 'animate-duo-entrance' : 'invisible'}`}>
+                            <button onClick={() => { setIntroPhase(2); setHeadlineDone(false); setTypewriterDone(false); }} className="border border-[#4C2F92] text-[#4C2F92] text-[13px] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#4C2F92] hover:text-white transition-colors">Thanks!</button>
+                            <button onClick={() => setDashboardIntroDismissed(true)} className="text-[13px] text-[#4C2F92] font-medium hover:underline">Skip</button>
+                          </div>
+                        </>
+                      )}
+
+                      {introPhase === 2 && (
+                        <>
+                          <h2 className="text-[22px] font-bold text-[#1d1c1f] mb-2 leading-tight min-h-[30px]">
+                            <HTMLTypewriter html="Let's get you some more points." speed={40} onComplete={() => setHeadlineDone(true)} />
+                          </h2>
+                          <div className="min-h-[56px] mb-4">
+                            {headlineDone && (
+                              <p className="text-[14px] text-[#575559] leading-relaxed">
+                                <HTMLTypewriter html="One of the best ways to get the most out of your membership is by finding <strong>a few different ways</strong> of earning points.<br/>You can add some to this <strong>My Velocity</strong> page." speed={25} onComplete={() => setTypewriterDone(true)} />
+                              </p>
+                            )}
+                          </div>
+                          <div className={`flex items-center gap-5 ${typewriterDone ? 'animate-duo-entrance' : 'invisible'}`}>
+                            <button onClick={() => { setIntroPhase(3); setHeadlineDone(false); setTypewriterDone(false); }} className="border border-[#4C2F92] text-[#4C2F92] text-[13px] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#4C2F92] hover:text-white transition-colors">Show me!</button>
+                            <button onClick={() => setDashboardIntroDismissed(true)} className="text-[13px] text-[#4C2F92] font-medium hover:underline">Skip</button>
+                          </div>
+                        </>
+                      )}
+
+                      {introPhase === 3 && (
+                        <>
+                          <h2 className="text-[22px] font-bold text-[#1d1c1f] mb-2 leading-tight min-h-[30px]">
+                            <HTMLTypewriter html="Choose how you want to earn" speed={40} onComplete={() => setHeadlineDone(true)} />
+                          </h2>
+                          <div className="min-h-[56px] mb-4">
+                            {headlineDone && (
+                              <p className="text-[14px] text-[#575559] leading-relaxed">
+                                <HTMLTypewriter html="You will see lots of <strong>different ways</strong> that you can earn. You can <strong>choose a few</strong> that look good initially. Don't worry, you can change these at any time!" speed={25} onComplete={() => setTypewriterDone(true)} />
+                              </p>
+                            )}
+                          </div>
+                          <div className={`flex items-center gap-5 ${typewriterDone ? 'animate-duo-entrance' : 'invisible'}`}>
+                            <button onClick={() => { setIntroPhase(4); setHeadlineDone(false); setTypewriterDone(false); setLionVariant('ah'); }} className="border border-[#4C2F92] text-[#4C2F92] text-[13px] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#4C2F92] hover:text-white transition-colors">OK!</button>
+                            <button onClick={() => setDashboardIntroDismissed(true)} className="text-[13px] text-[#4C2F92] font-medium hover:underline">Skip</button>
+                          </div>
+                        </>
+                      )}
+
+                      {introPhase === 4 && (
+                        <>
+                          <h2 className="text-[22px] font-bold text-[#1d1c1f] mb-2 leading-tight min-h-[30px]">
+                            <HTMLTypewriter html="Add your favourite ways to earn" speed={40} onComplete={() => setHeadlineDone(true)} />
+                          </h2>
+                          <div className="min-h-[56px] mb-4">
+                            {headlineDone && (
+                              <p className="text-[14px] text-[#575559] leading-relaxed">
+                                <HTMLTypewriter html="Adding these ways to earn to your list adds them as <strong>targets.</strong> This gives you a <strong>target number of points</strong> to aim for each month. Then you can imagine what kind of <strong>rewards</strong> you might want." speed={25} onComplete={() => setTypewriterDone(true)} />
+                              </p>
+                            )}
+                          </div>
+                          <div className={`flex items-center gap-5 ${typewriterDone ? 'animate-duo-entrance' : 'invisible'}`}>
+                            <button onClick={() => { setIntroPhase(5); setHeadlineDone(false); setTypewriterDone(false); setLionVariant('foryou'); }} className="border border-[#4C2F92] text-[#4C2F92] text-[13px] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#4C2F92] hover:text-white transition-colors">All right!</button>
+                            <button onClick={() => setDashboardIntroDismissed(true)} className="text-[13px] text-[#4C2F92] font-medium hover:underline">Skip</button>
+                          </div>
+                        </>
+                      )}
+
+                      {introPhase === 5 && (
+                        <>
+                          <div className="min-h-[72px] mb-4">
+                            <p className="text-[14px] text-[#575559] leading-relaxed">
+                              <HTMLTypewriter html="Once you have some target ways to earn, they'll appear on this page — your <strong>My Velocity</strong> page. From here, you can start to learn more about them and I'll help you with <strong>next steps</strong> to set them up.<br/><br/>How does that sound?" speed={25} onComplete={() => setTypewriterDone(true)} />
                             </p>
-                          )}
-                        </div>
+                          </div>
+                          <div className={`flex items-center gap-5 ${typewriterDone ? 'animate-duo-entrance' : 'invisible'}`}>
+                            <button onClick={() => { setDashboardIntroDismissed(true); goTo(3); }} className="border border-[#4C2F92] text-[#4C2F92] text-[13px] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#4C2F92] hover:text-white transition-colors">Sounds good</button>
+                            <button onClick={() => setDashboardIntroDismissed(true)} className="text-[13px] text-[#4C2F92] font-medium hover:underline">Skip</button>
+                          </div>
+                        </>
+                      )}
 
-                        <div className={`flex flex-wrap items-center gap-6 mb-4 ${typewriterDone ? 'animate-duo-entrance visible' : 'invisible'}`}>
-                          <button
-                            onClick={() => {
-                              setIntroPhase(2);
-                              setHeadlineDone(false);
-                              setTypewriterDone(false);
-                            }}
-                            className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
-                          >
-                            Thanks!
-                          </button>
-                          <button
-                            onClick={() => setDashboardIntroDismissed(true)}
-                            className="text-[15px] text-[#E40000] font-medium hover:underline"
-                          >
-                            Skip
-                          </button>
-                        </div>
-                      </>
-                    ) : introPhase === 2 ? (
-                      <>
-                        <h2 className="text-[20px] text-[#323232] font-normal mb-3 min-h-[30px]">
-                          <HTMLTypewriter html="Let's get you some more points." speed={40} onComplete={() => setHeadlineDone(true)} />
-                        </h2>
-                        <div className="min-h-[48px]">
-                          {headlineDone && (
-                            <p className="text-[15px] text-gray-800 leading-relaxed mb-8">
-                              <HTMLTypewriter
-                                html="One of the best ways to get the most out of your membership is by finding <strong>a few different ways</strong> of earning points.<br/>You can add some to this <strong>For you</strong> page."
-                                speed={30}
-                                onComplete={() => setTypewriterDone(true)}
-                              />
-                            </p>
-                          )}
-                        </div>
+                    </div>
 
-                        <div className={`flex flex-wrap items-center gap-6 mb-4 ${typewriterDone ? 'animate-duo-entrance visible' : 'invisible'}`}>
-                          <button
-                            onClick={() => {
-                              setIntroPhase(3);
-                              setHeadlineDone(false);
-                              setTypewriterDone(false);
-                            }}
-                            className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
-                          >
-                            Show me!
-                          </button>
-                          <button
-                            onClick={() => goTo(4)}
-                            className="text-[#E40000] text-[15px] font-medium hover:underline"
-                          >
-                            Choose favourite reward
-                          </button>
-                          <button
-                            onClick={() => setDashboardIntroDismissed(true)}
-                            className="text-[15px] text-[#E40000] font-medium hover:underline"
-                          >
-                            Skip
-                          </button>
-                        </div>
-                      </>
-                    ) : introPhase === 3 ? (
-                      <>
-                        <h2 className="text-[20px] text-[#323232] font-normal mb-3 min-h-[30px]">
-                          <HTMLTypewriter html="Choose how you want to earn" speed={40} onComplete={() => setHeadlineDone(true)} />
-                        </h2>
-                        <div className="min-h-[48px]">
-                          {headlineDone && (
-                            <p className="text-[15px] text-gray-800 leading-relaxed mb-8">
-                              <HTMLTypewriter
-                                html="You will see lots of <b>different ways</b> that you can earn. You can <b>choose a few</b> that look good initially. Don't worry, you can change these at any time!"
-                                speed={30}
-                                onComplete={() => setTypewriterDone(true)}
-                              />
-                            </p>
-                          )}
-                        </div>
-
-                        <div className={`flex flex-wrap items-center gap-6 mb-4 ${typewriterDone ? 'animate-duo-entrance visible' : 'invisible'}`}>
-                          <button
-                            onClick={() => {
-                              setIntroPhase(4);
-                              setHeadlineDone(false);
-                              setTypewriterDone(false);
-                            }}
-                            className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
-                          >
-                            OK!
-                          </button>
-                          <button
-                            onClick={() => setDashboardIntroDismissed(true)}
-                            className="text-[15px] text-[#E40000] font-medium hover:underline"
-                          >
-                            Skip
-                          </button>
-                        </div>
-                      </>
-                    ) : introPhase === 4 ? (
-                      <>
-                        <h2 className="text-[20px] text-[#323232] font-normal mb-3 min-h-[30px]">
-                          <HTMLTypewriter html="Add your favourite ways to earn" speed={40} onComplete={() => setHeadlineDone(true)} />
-                        </h2>
-                        <div className="min-h-[48px]">
-                          {headlineDone && (
-                            <p className="text-[15px] text-gray-800 leading-relaxed mb-8">
-                              <HTMLTypewriter
-                                html="Adding these ways to earn to your list adds them as <b>targets.</b> This gives you a <b>target number of points</b> to aim for each month. Then you can imagine what kind <b>rewards</b> you might want."
-                                speed={30}
-                                onComplete={() => setTypewriterDone(true)}
-                              />
-                            </p>
-                          )}
-                        </div>
-
-                        <div className={`flex flex-wrap items-center gap-6 mb-4 ${typewriterDone ? 'animate-duo-entrance visible' : 'invisible'}`}>
-                          <button
-                            onClick={() => {
-                              setIntroPhase(5);
-                              setHeadlineDone(false);
-                              setTypewriterDone(false);
-                            }}
-                            className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
-                          >
-                            All right!
-                          </button>
-                          <button
-                            onClick={() => setDashboardIntroDismissed(true)}
-                            className="text-[15px] text-[#E40000] font-medium hover:underline"
-                          >
-                            Skip
-                          </button>
-                        </div>
-                      </>
-                    ) : introPhase === 5 ? (
-                      <>
-                        <h2 className="text-[20px] text-[#323232] font-normal mb-3 min-h-[30px]">
-                        </h2>
-                        <div className="min-h-[48px]">
-                          <p className="text-[15px] text-gray-800 leading-relaxed mb-8">
-                            <HTMLTypewriter
-                              html="Once you have some target ways to earn, they'll appear on this page - your <b>For you</b> page. From here, you can start to learn more about them and I'll help you with <b>next steps</b> to set them up.<br/><br/>How does that sound?"
-                              speed={30}
-                              onComplete={() => setTypewriterDone(true)}
-                            />
-                          </p>
-                        </div>
-
-                        <div className={`flex flex-wrap items-center gap-6 mb-4 ${typewriterDone ? 'animate-duo-entrance visible' : 'invisible'}`}>
-                          <button
-                            onClick={() => {
-                              setDashboardIntroDismissed(true);
-                              goTo(3);
-                            }}
-                            className="bg-white text-[#E40000] px-6 py-2.5 rounded-full border border-[2px] border-[#E40000] font-semibold text-[15px] hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
-                          >
-                            Sounds good
-                          </button>
-                          <button
-                            onClick={() => setDashboardIntroDismissed(true)}
-                            className="text-[15px] text-[#E40000] font-medium hover:underline"
-                          >
-                            Skip
-                          </button>
-                        </div>
-                      </>
-                    ) : null}
                   </div>
-
-                  {/* Right: Illustration */}
-                  <div className="flex-shrink-0 flex justify-end">
-                    <div className="flex items-end gap-6">
-                      {/* Step 1: Choose */}
-                      <div className={`flex flex-col items-center transition-all duration-300 ${introPhase >= 3 && introPhase !== 3 ? 'opacity-40 grayscale' : 'opacity-100'} ${introPhase === 3 ? 'scale-110 drop-shadow-md' : 'scale-100'}`}>
-                        <div className={`w-[124px] h-[124px] rounded-[16px] flex items-center justify-center relative shadow-sm mb-3 overflow-hidden ${introPhase === 3 ? 'bg-white ring-2 ring-[#E40000]' : 'bg-[#F7F7F7]'}`}>
-                          <img src={imgChoose} alt="Choose" className="w-full h-full object-cover" />
+                </div>
+              ) : selectedWTEs.length === 0 ? (
+                <div className="w-full max-w-[1100px] mx-auto">
+                  <div className="w-full border border-gray-200 rounded-xl overflow-hidden flex">
+                    {/* Left column */}
+                    <div className="flex-1 flex flex-col min-w-0">
+                      <div className="flex items-center gap-4 px-6 py-5">
+                        <div className="w-[60px] h-[60px] rounded-xl bg-[#EDE8F7] flex items-center justify-center shrink-0 overflow-hidden">
+                          <img src={LionImg} alt="" className="w-[52px] h-[52px] object-contain" />
                         </div>
-                        <span className={`text-[14px] font-medium ${introPhase === 3 ? 'text-[#E40000]' : 'text-[#323232]'}`}>Choose</span>
+                        <div className="flex-1">
+                          <h2 className="text-[20px] font-bold text-[#1d1c1f]">Good morning, {slot?.name?.split(' ')[0] || 'Kim'}!</h2>
+                          <p className="text-[14px] text-[#575559]">Let's get you some points</p>
+                        </div>
                       </div>
-
-                      {/* Step 2: Add */}
-                      <div className={`flex flex-col items-center transition-all duration-300 ${introPhase >= 3 && introPhase !== 4 ? 'opacity-40 grayscale' : 'opacity-100'} ${introPhase === 4 ? 'scale-110 drop-shadow-md' : 'scale-100'}`}>
-                        <div className={`w-[124px] h-[124px] rounded-[16px] flex items-center justify-center relative shadow-sm mb-3 overflow-hidden ${introPhase === 4 ? 'bg-white ring-2 ring-[#E40000]' : 'bg-[#F7F7F7]'}`}>
-                          <img src={imgAdd} alt="Add" className="w-full h-full object-cover" />
+                      <div className="grid grid-cols-3 gap-0 divide-x divide-gray-100 px-6 pb-6">
+                        <div className="flex flex-col items-center gap-3 pr-6">
+                          <button
+                            onClick={() => goTo(3)}
+                            className="w-[90px] h-[90px] rounded-full border-2 border-[#4C2F92] flex items-center justify-center transition-colors"
+                          >
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4C2F92" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                          </button>
+                          <p className="text-[13px] font-semibold text-[#1d1c1f] text-center leading-snug">Add a way<br/>to earn</p>
+                          <button onClick={() => goTo(3)} className="text-[13px] text-[#4C2F92] font-bold hover:underline">Edit target ways to earn</button>
                         </div>
-                        <span className={`text-[14px] font-medium ${introPhase === 4 ? 'text-[#E40000]' : 'text-[#323232]'}`}>Add</span>
+                        <div className="flex items-center px-6">
+                          <div className="border border-gray-200 rounded-xl p-5 w-full">
+                            <p className="text-[15px] font-bold text-[#1d1c1f] mb-2">Did you know?</p>
+                            <p className="text-[13px] text-[#575559] leading-relaxed">It's much easier to earn towards rewards quickly when you earn in a few ways.</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-center gap-3 pl-6">
+                          <div className="w-[90px] h-[90px] rounded-xl border-2 border-[#4C2F92] flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => goTo(3)}>
+                            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#4C2F92" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            <p className="text-[11px] font-semibold text-[#1d1c1f]">Select a reward</p>
+                          </div>
+                          <button onClick={() => goTo(3)} className="text-[13px] text-[#4C2F92] font-bold hover:underline">Edit target reward</button>
+                        </div>
                       </div>
-
-                      {/* Step 3: Set up */}
-                      <div className={`flex flex-col items-center transition-all duration-300 ${introPhase >= 3 && introPhase !== 5 ? 'opacity-40 grayscale' : 'opacity-100'} ${introPhase === 5 ? 'scale-110 drop-shadow-md' : 'scale-100'}`}>
-                        <div className={`w-[124px] h-[124px] rounded-[16px] flex items-center justify-center relative shadow-sm mb-3 overflow-hidden ${introPhase === 5 ? 'bg-white ring-2 ring-[#E40000]' : 'bg-[#F7F7F7]'}`}>
-                          <img src={imgSetup} alt="Set up" className="w-full h-full object-cover" />
+                    </div>
+                    {/* Right column: red member card with full-height border */}
+                    <div className="hidden sm:flex flex-col border-l border-transparent w-[204px] shrink-0 items-center justify-start px-4 py-5">
+                      <div className="w-[172px] h-[100px] rounded-xl flex-col justify-between p-4 text-white flex"
+                           style={{ background: 'linear-gradient(135deg, #7A1515 0%, #C90000 100%)' }}>
+                        <div className="flex items-center justify-end gap-1.5 text-[12px] font-medium opacity-90">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          1227 062 631
                         </div>
-                        <span className={`text-[14px] font-medium ${introPhase === 5 ? 'text-[#E40000]' : 'text-[#323232]'}`}>Set up</span>
+                        <div className="text-right">
+                          <p className="text-[11px] text-white/70 mb-0.5">Member since 2024</p>
+                          <p className="text-[28px] leading-none" style={{ fontWeight: 100 }}>Red</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-between items-start w-full relative">
+                <div className="w-full max-w-[1100px] mx-auto">
+                  <div className="w-full border border-gray-200 rounded-xl overflow-hidden flex">
+                    {/* Left column */}
+                    <div className="flex-1 flex flex-col min-w-0">
+
+                    {/* Card header */}
+                    <div className="flex items-center gap-4 px-6 py-5">
+                      <div className="w-[72px] h-[60px] rounded-xl bg-[#EDE8F7] shrink-0 overflow-hidden flex items-center justify-center">
+                        <LionSprite variant="bubble" targetHeight={60} />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-[20px] font-bold text-[#1d1c1f]">Good morning, {slot?.name?.split(' ')[0] || 'Kim'}!</h2>
+                        <p className="text-[14px] text-[#575559]">Let's get you some points</p>
+                      </div>
+                    </div>
+                    {/* Card content */}
+                    <div className="flex justify-between items-stretch px-6 pb-6 relative">
 
                   {/* Left: Favourite ways to earn */}
-                  <div className="flex-1 min-w-0 mr-8 xl:mr-12 relative">
-                    <div className="flex items-center gap-2 mb-4">
-                      <h3 className="text-[14px] text-black">Target ways to earn:</h3>
-                      <button onClick={() => goTo(3)} className="text-[14px] text-[#E40000] underline font-medium">Edit</button>
-                    </div>
+                  <div className="flex-1 min-w-0 mr-8 xl:mr-12 relative flex flex-col gap-0">
 
-                    <div className="relative w-full overflow-hidden">
+                    <div className="relative w-full overflow-hidden pt-2 -mt-2">
                       {/* Left Gradient Mask & Arrow */}
                       {canScrollLeft && (
                         <div className="absolute -left-2 top-0 bottom-0 w-[140px] bg-gradient-to-r from-white via-white/90 to-transparent z-10 pointer-events-none flex items-center justify-start pb-12 pl-2">
@@ -1018,23 +1290,24 @@ export default function Dashboard({ goTo }) {
                             ? Math.min(100, Math.round((earned / target) * 100))
                             : (setupSteps / 4) * 100;
 
+                          const isAnimating = activeAnim !== null || animationQueue.length > 0;
+                          const metTarget = earned >= target;
+                          const showHelpMe = (earned > 0 || current.dashboardIntroDismissed) && !isAnimating && !metTarget && earned > 0;
+
                           return (
                             <div key={numericId} className={`flex flex-col items-center w-[120px] shrink-0 relative transition-transform duration-500 ease-out ${isActiveAnim ? 'scale-[1.08]' : ''}`}>
-                              <span className="text-[14px] font-medium text-[#323232] text-center mb-2 h-[40px] flex items-center justify-center line-clamp-2 leading-tight">
-                                {wte.name}
-                              </span>
-                              <div className="relative w-[100px] h-[100px] mb-4">
+                              <div className="relative w-[100px] h-[100px] mb-2">
                                 <svg className="w-full h-full transform -rotate-90">
                                   <circle cx="50" cy="50" r="46" fill="none" stroke="#F3F5F7" strokeWidth="4" />
                                   <circle
                                     cx="50" cy="50" r="46" fill="none"
-                                    stroke="#E40000"
+                                    stroke="#4C2F92"
                                     strokeWidth={isActiveAnim ? "5" : "4"}
                                     strokeDasharray={289}
                                     strokeDashoffset={289 - (289 * percent) / 100}
                                     strokeLinecap="round"
                                     className="transition-all duration-1000"
-                                    style={isActiveAnim ? { filter: 'drop-shadow(0 0 5px rgba(228,0,0,0.45))' } : {}}
+                                    style={isActiveAnim ? { filter: 'drop-shadow(0 0 5px rgba(76,47,146,0.45))' } : {}}
                                   />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center p-2 pt-3">
@@ -1051,20 +1324,18 @@ export default function Dashboard({ goTo }) {
                                 {/* Confetti burst */}
                                 {isActiveAnim && <ConfettiBurst />}
                               </div>
-                              {earned > 0 || current.dashboardIntroDismissed ? (() => {
-                                const isAnimating = activeAnim !== null || animationQueue.length > 0;
-                                const metTarget = earned >= target;
-                                const showHelpMe = !isAnimating && !metTarget && earned > 0;
-                                return (
-                                  <div className="text-center h-[34px] flex items-center justify-center relative">
-                                    {showHelpMe && (
-                                      <button onClick={() => { setHelpMeWteId(stringId); setHelpPhase(0); }} className="text-[14px] font-bold text-[#323232] underline decoration-1 hover:text-[#E40000] hover:decoration-[#E40000] transition-colors focus:outline-none cursor-pointer animate-duo-entrance">
-                                        Help me
-                                      </button>
-                                    )}
-                                  </div>
-                                );
-                              })() : (
+                              <div className="relative mb-2">
+                                {showHelpMe && (
+                                  <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-[#E40000] rounded-full z-10" />
+                                )}
+                                <span
+                                  className={`text-[13px] font-medium text-[#323232] text-center line-clamp-2 leading-tight block${showHelpMe ? ' cursor-pointer hover:text-[#E40000] transition-colors' : ''}`}
+                                  onClick={showHelpMe ? () => { setHelpMeWteId(stringId); setHelpPhase(0); } : undefined}
+                                >
+                                  {wte.name}
+                                </span>
+                              </div>
+                              {!(earned > 0 || current.dashboardIntroDismissed) && (
                                 <div className="flex flex-col items-center h-[34px]">
                                   <button
                                     onClick={() => setShowOnboardingId(stringId)}
@@ -1079,574 +1350,94 @@ export default function Dashboard({ goTo }) {
                         })}
 
                         {/* Add New Slot */}
-                        <div className="flex flex-col items-center w-[120px] shrink-0 opacity-70 hover:opacity-100 cursor-pointer transition-opacity group" onClick={() => goTo(3)}>
-                          <span className="text-[14px] font-medium text-center mb-2 h-[40px] flex items-center justify-center leading-tight transition-colors group-hover:text-red-600">Add</span>
-                          <div className="w-[100px] h-[100px] rounded-full border border-dashed border-gray-400 flex items-center justify-center text-gray-400 mb-4 transition-colors group-hover:border-red-600 group-hover:text-red-600">
-                            <svg className="w-8 h-8 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <div className="flex flex-col items-center gap-2 w-[120px] shrink-0 cursor-pointer group" onClick={() => goTo(3)}>
+                          <div className="w-[90px] h-[90px] rounded-full border-2 border-[#4C2F92] flex items-center justify-center text-[#4C2F92] transition-colors mb-2">
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                             </svg>
                           </div>
+                          <p className="text-[13px] font-semibold text-[#1d1c1f] text-center leading-snug">Add a way<br/>to earn</p>
                         </div>
 
                         {/* Flexible Promo Slot */}
-                        {selectedWTEs.length < 4 && (
-                          <div
-                            className="flex-1 min-w-[320px] max-w-[650px] rounded-[16px] border border-gray-200 overflow-hidden relative shadow-[0_2px_8px_rgba(0,0,0,0.04)] ml-2 mb-4 mt-[5px]"
-                            style={{ cursor: "pointer", height: "258px" }}
-                            onClick={() => goTo(3)}
-                          >
-                            <img src={ArrowUpImage} alt="" className="absolute top-5 right-5 w-full h-full object-cover object-right-top pointer-events-none opacity-80" />
-                            <div className="relative p-7 z-10 h-full flex flex-col justify-center pointer-events-none">
-                              <h4 className="text-[20px] text-[#323232] font-normal mb-3">Did you know?</h4>
-                              <p className="text-[14px] text-[#555555] leading-[1.4] max-w-[340px]">
-                                It's much easier to earn quickly towards rewards by earning in more ways. You could be missing out with everyday spend you are already making.
-                              </p>
-                            </div>
+                        {selectedWTEs.length === 1 && (
+                          <div className="flex-1 min-w-[220px] max-w-[500px] border border-gray-200 rounded-xl p-5 ml-4">
+                            <p className="text-[15px] font-bold text-[#1d1c1f] mb-2">Did you know?</p>
+                            <p className="text-[13px] text-[#575559] leading-relaxed">
+                              It's much easier to earn towards rewards quickly when you earn in a few ways.
+                            </p>
                           </div>
                         )}
                       </div>
+                      <button onClick={() => goTo(3)} className="text-[13px] text-[#4C2F92] font-bold hover:underline w-full text-center block mt-1">Edit target ways to earn</button>
                     </div>
                   </div>
 
-                  {/* Right: Target Reward & Profile */}
-                  <div className="flex flex-col w-[216px] shrink-0 ml-auto">
-                    <div className="flex justify-between items-center mb-5">
-                      <h3 className="text-[14px] text-black">Target reward and tier:</h3>
-                      <button onClick={() => goTo(3)} className="text-[14px] text-[#E40000] underline font-medium">Edit</button>
-                    </div>
-
-                    <div className="flex flex-col gap-[14px]">
-                      <div className="w-full h-[122px] rounded-[5px] overflow-hidden relative shadow-[0_2px_8px_rgba(0,0,0,0.08)] bg-white pointer-events-auto cursor-pointer">
+                  {/* Right: Target Reward */}
+                  <div className="flex items-stretch shrink-0">
+                    <div className="w-px bg-gray-200 h-[120px] self-start"></div>
+                    <div className="flex flex-col w-[164px] items-center pl-6">
+                      <div className="w-full h-[100px] rounded-xl overflow-hidden cursor-pointer">
                         {selectedReward ? (
                           <ConnectedRewardCard reward={selectedReward} variant="mini" />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => goTo(3)}>
-                            <span className="text-[#E40000] text-[13px] font-bold underline">Select a reward</span>
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-2 border-2 border-[#4C2F92] rounded-xl" onClick={() => goTo(3)}>
+                            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#4C2F92" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            <p className="text-[13px] font-semibold text-[#1d1c1f]">Select a reward</p>
                           </div>
                         )}
                       </div>
-
-                      <div className="w-full h-[122px] rounded-[5px] overflow-hidden relative shadow-[0_2px_8px_rgba(0,0,0,0.08)] bg-white pointer-events-auto">
-                        <TierCard
-                          tierIndex={favouriteTierIndex !== null ? favouriteTierIndex : flightTierIndex}
-                          isFavourite={favouriteTierIndex !== null}
-                          variant="mini"
-                          onToggleFavourite={() => {
-                            if (favouriteTierIndex !== null) {
-                              updateFavouriteTierIndex(null);
-                            } else {
-                              updateFavouriteTierIndex(flightTierIndex);
-                            }
-                          }}
-                        />
-                      </div>
+                      {selectedReward && (
+                        <p className="text-[13px] font-medium text-[#323232] text-center leading-tight mt-2">Velocity Reward Seat</p>
+                      )}
+                      <button onClick={() => goTo(3)} className="text-[13px] text-[#4C2F92] font-bold hover:underline w-full text-center mt-8">Edit target reward</button>
                     </div>
                   </div>
 
+                </div>
+                    </div>{/* end left column */}
+                    {/* Right column: red member card with full-height border */}
+                    <div className="hidden sm:flex flex-col border-l border-transparent w-[204px] shrink-0 items-center justify-start px-4 py-5">
+                      <div className="w-[172px] h-[100px] rounded-xl flex flex-col justify-between p-4 text-white"
+                           style={{ background: 'linear-gradient(135deg, #7A1515 0%, #C90000 100%)' }}>
+                        <div className="flex items-center justify-end gap-1.5 text-[12px] font-medium opacity-90">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          {slot?.memberNumber || '1227 062 631'}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] text-white/70 mb-0.5">Member since 2024</p>
+                          <p className="text-[28px] leading-none" style={{ fontWeight: 100 }}>Red</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        <main className="w-full max-w-[1218px] mx-auto px-4 xl:px-0 py-4 mb-8 flex-grow">
-          {/* --- Lower Content (Sitting on Grey) --- */}
-          <div className="space-y-12">
-
-            {/* --- Flight Search Component --- */}
-            <div className="w-full flex flex-col justify-start items-center gap-6 mb-8 pt-4">
-              <div className="self-stretch flex flex-col justify-start items-start">
-                <div className="w-full p-8 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-start items-start">
-
-                  {/* Top Inputs */}
-                  <div className="w-full pb-4 inline-flex justify-start items-center gap-4">
-                    <div className="flex-1 flex justify-start items-end gap-4">
-                      {/* Departure */}
-                      <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
-                        <div className="text-[#323232] text-[14px] font-normal leading-5 pb-1">Departure location</div>
-                        <div className="self-stretch h-16 px-4 py-2 bg-[#F5F5F5] rounded-lg inline-flex justify-start items-center cursor-pointer hover:bg-gray-200 transition-colors">
-                          <div className="flex-1 flex justify-center items-center gap-3">
-                            <img src={iconWheelsUp} alt="Wheels up" className="w-6 h-6 object-contain" />
-                            <div className="flex-1 text-[#323232] text-[16px] font-normal leading-6 truncate">SYD, Sydney, Australia</div>
-                          </div>
+        <main className="sm:px-6 sm:pt-[20px] sm:pb-8">
+                <div className="sm:max-w-[1100px] sm:mx-auto flex flex-col gap-4 sm:gap-5">
+                    <FlightSearch />
+                    <div className="sm:max-w-[1100px] sm:mx-auto w-full">
+                        <div className="min-[1200px]:grid min-[1200px]:grid-cols-[362px_1fr] min-[1200px]:gap-6 min-[1200px]:items-start flex flex-col gap-4">
+                            <VelocityPointsPanel
+                                points={current?.currentPtsBalance || 0}
+                                pointsThisMonth={Object.values(current?.monthlyEarnedByWTE || {}).reduce((a, b) => a + b, 0)}
+                            />
+                            <div>
+                                <ForYouPanel />
+                                <YourTrips />
+                            </div>
                         </div>
-                      </div>
-
-                      {/* Arrival */}
-                      <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
-                        <div className="text-[#323232] text-[14px] font-normal leading-5 pb-1">Arrival location</div>
-                        <div className="self-stretch h-16 px-4 py-2 bg-[#F5F5F5] rounded-lg inline-flex justify-start items-center cursor-pointer hover:bg-gray-200 transition-colors">
-                          <div className="flex-1 flex justify-center items-center gap-3">
-                            <img src={iconWheelsDown} alt="Wheels down" className="w-6 h-6 object-contain" />
-                            <div className="flex-1 text-[#323232] text-[16px] font-normal leading-6 truncate">LHR, London (Heathrow), United...</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Dates */}
-                      <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
-                        <div className="text-[#323232] text-[14px] font-normal leading-5 pb-1">Travel dates</div>
-                        <div className="self-stretch h-16 px-4 py-2 bg-[#F5F5F5] rounded-lg inline-flex justify-start items-center cursor-pointer hover:bg-gray-200 transition-colors">
-                          <div className="flex-1 flex justify-center items-center gap-3">
-                            <img src={iconCalendar} alt="Calendar" className="w-6 h-6 object-contain" />
-                            <div className="flex-1 text-[#323232] text-[16px] font-normal leading-6 truncate">17 Dec 2025</div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-
-                  {/* Bottom Controls / Search */}
-                  <div className="w-full flex justify-between items-center mt-2">
-                    <div className="flex justify-start items-center gap-6">
-
-                      {/* One Way */}
-                      <div className="flex justify-start items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors text-[#323232] text-[16px] font-normal">
-                        <span>One way</span>
-                        <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                      </div>
-
-                      {/* Adult */}
-                      <div className="flex justify-start items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors text-[#323232] text-[16px] font-normal">
-                        <img src={iconAdult} alt="Adult" className="w-5 h-5 object-contain" />
-                        <span>1 Adult</span>
-                      </div>
-
-                      {/* Economy */}
-                      <div className="flex justify-start items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors text-[#323232] text-[16px] font-normal">
-                        <span>Economy</span>
-                        <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                      </div>
-
-                      {/* Rewards Toggle */}
-                      <div className="flex justify-start items-center gap-3 pl-6 border-l border-gray-100 ml-2">
-                        <div className="w-6 h-6 flex justify-center items-center rounded-full bg-white border border-gray-300">
-                          <img src={iconAward} alt="Rewards" className="w-[14px] h-[14px] object-contain" />
-                        </div>
-                        <span className="text-[#323232] text-[16px] font-normal">Rewards</span>
-                        <div className="w-[36px] h-6 relative cursor-pointer">
-                          <div className="w-full h-full left-0 top-0 absolute bg-[#E5E5E5] rounded-xl border border-[#E5E5E5] transition-colors" />
-                          <div className="w-5 h-5 left-[2px] top-[1.5px] absolute bg-white rounded-full shadow-sm transition-all" />
-                        </div>
-                      </div>
-
-                    </div>
-
-                    {/* Search Button */}
-                    <button className="h-[48px] px-6 bg-black hover:bg-gray-800 transition-colors rounded-full flex justify-center items-center gap-2 group">
-                      <span className="text-white text-[16px] font-bold leading-6">Search flights</span>
-                      <img src={iconArrowRight} alt="Search" className="w-5 h-5 object-contain ml-0.5" />
-                    </button>
-
-                  </div>
                 </div>
-
-                {/* Links Below Search */}
-                <div className="px-6 py-6 flex justify-start items-center gap-14">
-                  <div className="flex justify-start items-center gap-3 cursor-pointer group">
-                    <img src={iconMultiCity} alt="Multi-city" className="w-[28px] h-[28px] object-contain" />
-                    <span className="text-[#323232] text-[16px] font-medium leading-6 group-hover:underline">Multi-city</span>
-                  </div>
-
-                  <div className="flex justify-start items-center gap-3 cursor-pointer group">
-                    <img src={iconMap} alt="Where Can I Go?" className="w-[28px] h-[28px] object-contain" />
-                    <span className="text-[#323232] text-[16px] font-medium leading-6 group-hover:underline">Where Can I Go?</span>
-                  </div>
-
-                  <div className="flex justify-start items-center gap-3 cursor-pointer group">
-                    <img src={iconFlightCredit} alt="Flight Credit" className="w-[28px] h-[28px] object-contain" />
-                    <span className="text-[#323232] text-[16px] font-medium leading-6 group-hover:underline">Flight Credit</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* --- Section 3: Modular Components (Static) --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-
-              {/* Points detail mockup */}
-              <div className="bg-white rounded-[4px] shadow-sm border border-gray-100 flex flex-col justify-between overflow-hidden">
-                <div className="p-4 bg-white flex justify-between items-center border-b border-gray-100">
-                  <div className="flex-1">
-                    <p className="text-[14px] text-gray-500 mb-1 leading-none">Qantas Points</p>
-                    <p className="text-[22px] font-medium text-[#323232] leading-none mt-2">146,000</p>
-                  </div>
-                  <div className="w-px h-10 bg-gray-200 mx-4"></div>
-                  <div className="flex-1">
-                    <p className="text-[14px] text-gray-500 mb-1 leading-none">Status Credits</p>
-                    <p className="text-[22px] font-medium text-[#323232] leading-none mt-2">0</p>
-                  </div>
-                </div>
-
-                <div className="flex-grow flex flex-col bg-white">
-                  <div className="p-4 border-b border-gray-100 flex-grow bg-white">
-                    <p className="text-[14px] text-[#323232] font-medium mb-3">Recent activity</p>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-start">
-                        <p className="text-[12px] text-gray-500 pr-2 leading-snug">BONUS POINTS / COMPLETED...</p>
-                        <span className="text-[14px] text-[#26A701] whitespace-nowrap">+ 100</span>
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <p className="text-[12px] text-gray-500 pr-2 leading-snug">QF 735 FLEXIBLE ECONOMY/A...</p>
-                        <span className="text-[14px] text-[#26A701] whitespace-nowrap">+ 20</span>
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <p className="text-[12px] text-gray-500 pr-2 leading-snug">QANTAS WELLBEING REWARD</p>
-                        <span className="text-[14px] text-[#26A701] whitespace-nowrap">+ 100</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white flex justify-between items-center border-t border-gray-50">
-                    <div>
-                      <p className="text-[15px] text-[#323232] font-medium">Memberships and Tiers</p>
-                      <p className="text-[14px] text-gray-500">Bronze</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-[#E40000] shadow-sm flex items-center justify-center">
-                      <svg width="24" height="24" viewBox="0 0 27 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M26.0576 23.6163C26.0794 23.639 26.1012 23.639 26.1232 23.639C26.167 23.639 26.1891 23.639 26.2329 23.5933C26.2764 23.5476 26.2764 23.4564 26.2329 23.4107C23.6278 20.5556 20.4319 18.249 16.8637 16.7647C15.7692 16.3078 15.7692 16.3078 15.7692 16.3078C15.1999 16.0563 14.8279 15.4856 14.8279 14.8232C14.8935 12.3795 20.4099 12.882 20.9791 11.7171C21.0668 11.5116 21.0668 11.5116 21.0668 11.5116C19.9284 10.4838 18.5929 9.73024 17.1046 9.2964C17.0828 9.36483 17.0387 9.63882 17.3451 10.1641C17.6738 10.7123 16.9949 11.603 15.988 10.6439C15.9004 10.5752 15.9004 10.5752 15.9004 10.5752C8.58908 3.58648 5.21819 8.19991 0.2491 0.0695199C0.20529 0.000828303 0.139698 -0.0218967 0.0738597 0.0238116C0.00826853 0.0695199 -0.0137602 0.137953 0.00826853 0.206386C3.92666 10.0499 11.9384 7.97163 12.8797 17.1528C12.9235 17.4955 13.1644 17.7695 13.4926 17.8152C17.9362 18.546 22.2707 20.4645 26.0358 23.6163H26.0576" fill="white" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-4 border-t border-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors">
-                    <span className="text-[15px] text-[#323232] font-medium">My benefits</span>
-                    <svg className="w-5 h-5 text-[#323232]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Nova Component placeholders */}
-              {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white border border-gray-100 rounded-[4px] shadow-sm flex flex-col justify-between overflow-hidden">
-                  <div className="p-4 border-b border-gray-100 bg-white">
-                    <p className="text-[18px] text-[#323232] py-1 font-medium">[NOVA COMPONENT]</p>
-                  </div>
-
-                  <div className="flex-grow flex items-center justify-center p-4 bg-white">
-                    <p className="text-[16px] text-[#323232] font-normal">TBC</p>
-                  </div>
-
-                  <div className="p-4 border-t border-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors bg-white">
-                    <span className="text-[15px] text-[#323232] font-medium">TBC</span>
-                    <svg className="w-5 h-5 text-[#323232]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* --- Section 4: Bookings & Upsell (Static) --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-              <div className="flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-[20px] text-[#323232] font-normal">Your next booking is in &lt;X weeks&gt;</h3>
-                  <button className="text-[16px] text-[#323232] flex items-center gap-2 hover:underline">
-                    All bookings
-                    <div className="w-6 h-6 flex items-center justify-center bg-white rounded-full border border-gray-200 shadow-sm text-[#323232]">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                    </div>
-                  </button>
-                </div>
-                <div className="relative rounded-[4px] overflow-hidden shadow-sm flex flex-col h-[160px]">
-                  <img src={imgFlightMelbourne} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-800 via-zinc-800/60 to-transparent top-auto bottom-0 h-28"></div>
-                  <div className="absolute inset-0 pb-4 flex flex-col justify-end items-center text-center gap-1 z-10">
-                    <img src={logoQantasTail} alt="" className="w-7 h-7 object-contain mb-1" />
-                    <div className="flex flex-col items-center gap-[2px]">
-                      <span className="text-white text-[14px] font-normal leading-tight">Sydney to</span>
-                      <span className="text-white text-[18px] font-medium leading-tight">Melbourne</span>
-                    </div>
-                    <span className="text-white text-[14px] font-normal mt-1">Booking ref: 5ZSHM9 • Tue, 19 Apr 2023</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col">
-                <h3 className="text-[20px] text-[#323232] font-normal mb-6">Complete your trip</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 h-[160px]">
-                  <div className="bg-white border border-gray-100 rounded-[4px] p-3.5 flex flex-col items-start shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
-                    <img src={iconHotelBed} alt="" className="w-7 h-7 mb-2 object-contain" />
-                    <div className="flex flex-col gap-0.5 flex-grow mt-1">
-                      <p className="text-[14px] text-[#323232] font-normal leading-tight mb-1">Book with Qantas hotels</p>
-                      <p className="text-[13px] text-gray-500 font-normal leading-tight">Earn 3 PTS per $1 spent</p>
-                    </div>
-                  </div>
-                  <div className="bg-white border border-gray-100 rounded-[4px] p-3.5 flex flex-col items-start shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
-                    <img src={iconCar} alt="" className="w-7 h-7 mb-2 object-contain" />
-                    <div className="flex flex-col gap-0.5 flex-grow mt-1">
-                      <p className="text-[14px] text-[#323232] font-normal leading-tight mb-1">Hire a car</p>
-                      <p className="text-[13px] text-gray-500 font-normal leading-tight">Earn 4 PTS per $1 spent with Avis</p>
-                    </div>
-                  </div>
-                  <div className="bg-white border border-gray-100 rounded-[4px] p-3.5 flex flex-col items-start shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
-                    <img src={iconPlaneProtection} alt="" className="w-7 h-7 mb-2 object-contain" />
-                    <div className="flex flex-col gap-0.5 flex-grow mt-1">
-                      <p className="text-[14px] text-[#323232] font-normal leading-tight mb-1">Qantas Travel Insurance</p>
-                      <p className="text-[13px] text-gray-500 font-normal leading-tight">Earn 1 point per $1 spent</p>
-                    </div>
-                  </div>
-                  <div className="bg-white border border-gray-100 rounded-[4px] p-3.5 flex flex-col items-start shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
-                    <img src={iconCreditCards} alt="" className="w-7 h-7 mb-2 object-contain" />
-                    <div className="flex flex-col gap-0.5 flex-grow mt-1">
-                      <p className="text-[14px] text-[#323232] font-normal leading-tight mb-1">Qantas Travel Money</p>
-                      <p className="text-[13px] text-gray-500 font-normal leading-tight">Earn 1.5 points for every A$1 spent overseas</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* --- Section 4.5: Qantas travel credit and Complimentary Lounge Invitations --- */}
-            <div className="mb-12 flex flex-col space-y-4">
-              <h3 className="text-[20px] text-[#323232] font-normal">Qantas travel credit and Complimentary Lounge Invitations</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                {/* Qantas Passes */}
-                <div className="bg-white rounded-[4px] shadow-sm border border-gray-100 flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <img src={iconBoardingPass} alt="Qantas Passes" className="w-[32px] h-[32px] mr-4 object-contain" />
-                  <div className="flex-grow flex flex-col">
-                    <span className="text-[16px] text-[#323232] font-medium mb-1">Qantas Passes</span>
-                    <span className="text-[13px] text-[#666]">
-                      <a href="#" className="text-[#E40000] underline hover:no-underline font-medium">Learn more</a> about Qantas Passes
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3 ml-4">
-                    <div className="bg-[#E5E5E5] px-2.5 py-0.5 rounded text-[14px] font-medium text-[#323232]">2</div>
-                    <svg className="w-5 h-5 text-[#323232]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </div>
-                </div>
-
-                {/* Complimentary Lounge Invitations */}
-                <div className="bg-white rounded-[4px] shadow-sm border border-gray-100 flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <img src={iconLounge} alt="Complimentary Lounge Invitations" className="w-[32px] h-[32px] mr-4 object-contain" />
-                  <div className="flex-grow flex flex-col">
-                    <span className="text-[16px] text-[#323232] font-medium mb-1">Complimentary Lounge Invitations</span>
-                    <span className="text-[13px] text-[#666]">Expires 31 Dec 2023.</span>
-                  </div>
-                  <div className="flex items-center space-x-3 ml-4">
-                    <div className="bg-[#E5E5E5] px-2.5 py-0.5 rounded text-[14px] font-medium text-[#323232]">3</div>
-                    <svg className="w-5 h-5 text-[#323232]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* --- Section 4.6: Maximise your membership --- */}
-            <div className="mb-12 flex flex-col space-y-4">
-              <h3 className="text-[20px] text-[#323232] font-normal">Maximise your membership</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                {/* Card 1 */}
-                <div className="bg-white rounded-[4px] shadow-sm border border-gray-100 flex overflow-hidden">
-                  <div className="p-4 flex flex-col justify-start items-center">
-                    <img src={logoEDR} alt="Everyday Rewards" className="w-[48px] h-[48px] object-contain" />
-                  </div>
-                  <div className="py-4 pr-4 flex-grow flex flex-col justify-between">
-                    <div>
-                      <h4 className="text-[15px] text-[#323232] font-medium leading-snug mb-1">Earn with Everyday Rewards</h4>
-                      <p className="text-[13px] text-[#666] leading-snug mb-3">Earn Qantas Points by linking Everyday Rewards to your account. <a href="#" className="underline">T&amp;C&apos;s apply</a></p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <button className="text-[13px] text-[#E40000] font-medium leading-normal hover:underline">Start earning points</button>
-                      <button className="text-[13px] text-gray-500 font-normal leading-normal hover:text-[#323232] transition-colors">Not now</button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 2 */}
-                <div className="bg-white rounded-[4px] shadow-sm border border-gray-100 flex overflow-hidden">
-                  <div className="p-4 flex flex-col justify-start items-center">
-                    <img src={logoUpgrade} alt="Upgrade to business class" className="w-[48px] h-[48px] object-contain" />
-                  </div>
-                  <div className="py-4 pr-4 flex-grow flex flex-col justify-between">
-                    <div>
-                      <h4 className="text-[15px] text-[#323232] font-medium leading-snug mb-1">Upgrade to business class</h4>
-                      <p className="text-[13px] text-[#666] leading-snug mb-3">Use your points to upgrade to business class on your next flight. <a href="#" className="underline">T&amp;C&apos;s apply</a></p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <button className="text-[13px] text-[#E40000] font-medium leading-normal hover:underline">Upgrade</button>
-                      <button className="text-[13px] text-gray-500 font-normal leading-normal hover:text-[#323232] transition-colors">Not now</button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 3 */}
-                <div className="bg-white rounded-[4px] shadow-sm border border-gray-100 flex overflow-hidden">
-                  <div className="p-4 flex flex-col justify-start items-center">
-                    <img src={logoPoints} alt="Points balance growing" className="w-[48px] h-[48px] object-contain" />
-                  </div>
-                  <div className="py-4 pr-4 flex-grow flex flex-col justify-between">
-                    <div>
-                      <h4 className="text-[15px] text-[#323232] font-medium leading-snug mb-1">Your points balance is growing</h4>
-                      <p className="text-[13px] text-[#666] leading-snug mb-3">From flights to hotel stays, discover what you can get with 50,000 PTS. <a href="#" className="underline">T&amp;C&apos;s apply</a></p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <button className="text-[13px] text-[#E40000] font-medium leading-normal hover:underline">Learn more</button>
-                      <button className="text-[13px] text-gray-500 font-normal leading-normal hover:text-[#323232] transition-colors">Not now</button>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* --- Section 4.7: Book and explore (Static) --- */}
-            <div className="mb-12 flex flex-col space-y-4">
-              <h3 className="text-[20px] text-[#323232] font-normal">Book and explore</h3>
-              <div className="bg-white rounded-[4px] shadow-sm border border-gray-100 p-2 flex items-stretch w-full overflow-x-auto whitespace-nowrap hide-scrollbar">
-                {exploreItems.map((item, idx) => (
-                  <div key={idx} className="flex-1 flex items-center justify-center min-w-[120px] relative">
-                    <div className="px-2 py-3 hover:bg-gray-50 cursor-pointer flex flex-col items-center justify-center space-y-2 rounded-md transition-colors w-full h-full">
-                      {item.isAll ? (
-                        <div className="h-8 flex items-center justify-center text-[#323232] mb-1">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <circle cx="5" cy="12" r="2" />
-                            <circle cx="12" cy="12" r="2" />
-                            <circle cx="19" cy="12" r="2" />
-                          </svg>
-                        </div>
-                      ) : (
-                        <img src={item.icon} alt={item.name} className="h-8 object-contain mb-1" />
-                      )}
-                      <span className="text-[14px] text-[#323232] text-center">{item.name}</span>
-                    </div>
-                    {idx < exploreItems.length - 1 && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-10 bg-gray-100"></div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* --- Section 5: Offers & Use my points --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-              {/* Left: My offers */}
-              <div className="flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-[20px] text-[#323232] font-normal">My offers</h3>
-                  <button className="text-[14px] text-[#323232] flex items-center hover:underline font-medium">See more <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
-                  {/* Card 1 */}
-                  <div className="bg-white border border-gray-100 rounded-[4px] shadow-sm flex flex-col group relative overflow-hidden h-full">
-                    <div className="aspect-[1.8/1] relative flex-shrink-0">
-                      <img src={imgRede} alt="Red Energy" className="w-full h-full object-cover" />
-                      <div className="absolute top-3 left-3 bg-[#C2EFE8] text-[#323232] text-[10px] font-medium tracking-wide px-2 py-1 rounded leading-none flex items-center justify-center pt-1.5 pb-1 uppercase">OFFER ENDS SOON</div>
-                      <button className="absolute top-3 right-4 w-6 h-6 bg-black text-white hover:bg-gray-800 rounded-full flex items-center justify-center p-1 cursor-pointer transition-colors shadow-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                      <div className="absolute bottom-3 right-4 bg-white p-2 rounded-[4px] shadow flex w-[84px] h-[54px] items-center justify-center">
-                        <img src={logoRede} className="w-full h-full object-contain" />
-                      </div>
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h4 className="text-[15px] font-medium text-[#323232] mb-2 leading-snug">Earn 1 Qantas Point per $1 spent</h4>
-                      <p className="text-[13px] text-[#666] mb-4 leading-relaxed flex-grow">Switch to a Qantas Red Saver plan by 27 September for a guaranteed share of three million points.</p>
-                      <div className="mt-auto">
-                        <a href="#" className="text-[13px] text-gray-400 underline decoration-gray-300 underline-offset-2 hover:text-[#323232] transition-colors">Terms and conditions</a>
-                      </div>
-                    </div>
-                    <div className="p-4 border-t border-gray-100 text-center">
-                      <button className="text-[#E40000] text-[13px] font-bold tracking-wide uppercase hover:underline">SWITCH NOW</button>
-                    </div>
-                  </div>
-
-                  {/* Card 2 */}
-                  <div className="bg-white border border-gray-100 rounded-[4px] shadow-sm flex flex-col group relative overflow-hidden h-full">
-                    <div className="aspect-[1.8/1] relative flex-shrink-0">
-                      <img src={imgCarpetCourt} alt="Carpet Court" className="w-full h-full object-cover" />
-                      <div className="absolute top-3 left-3 bg-[#C2EFE8] text-[#323232] text-[10px] font-medium tracking-wide px-2 py-1 rounded leading-none flex items-center justify-center pt-1.5 pb-1 uppercase">LIMITED OFFER</div>
-                      <button className="absolute top-3 right-4 w-6 h-6 bg-black text-white hover:bg-gray-800 rounded-full flex items-center justify-center p-1 cursor-pointer transition-colors shadow-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                      <div className="absolute bottom-3 right-4 bg-white px-2 py-1.5 rounded-[4px] shadow flex w-[96px] h-[48px] items-center justify-center">
-                        <img src={logoCarpetCourt} className="w-full h-full object-contain" />
-                      </div>
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h4 className="text-[15px] font-medium text-[#323232] mb-2 leading-snug">Win 100,000 Qantas Points with Carpet Court</h4>
-                      <p className="text-[13px] text-[#666] mb-4 leading-relaxed flex-grow">Simply shop by 30 September 2023 for your chance to win one of 50 prizes of 100,000 Qantas Points.</p>
-                      <div className="mt-auto">
-                        <a href="#" className="text-[13px] text-gray-400 underline decoration-gray-300 underline-offset-2 hover:text-[#323232] transition-colors">Terms and conditions</a>
-                      </div>
-                    </div>
-                    <div className="p-4 border-t border-gray-100 text-center">
-                      <button className="text-[#E40000] text-[13px] font-bold tracking-wide uppercase hover:underline">FIND OUT MORE</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Use my points */}
-              <div className="flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-[20px] text-[#323232] font-normal">Use my points</h3>
-                  <button className="text-[14px] text-[#323232] flex items-center hover:underline font-medium">See more <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
-                  {/* Card 3 */}
-                  <div className="bg-white border border-gray-100 rounded-[4px] shadow-sm flex flex-col relative overflow-hidden h-full">
-                    <div className="aspect-[1.8/1] relative flex-shrink-0">
-                      <img src={imgSingapore} alt="Singapore" className="w-full h-full object-cover" />
-                      <div className="absolute top-3 left-3 bg-[#C2EFE8] text-[#323232] text-[10px] font-medium tracking-wide px-2 py-1 rounded leading-none flex items-center justify-center pt-1.5 pb-1 uppercase">NEXT AVAILABLE 28 MAY</div>
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h4 className="text-[15px] font-medium text-[#323232] mb-8 leading-snug">Sydney to Singapore</h4>
-                      <div className="flex-grow"></div>
-                      <div className="mt-auto">
-                        <div className="flex justify-between items-end">
-                          <div>
-                            <p className="text-[13px] text-[#666] mb-0.5">Economy one way from</p>
-                            <p className="text-[20px] font-medium text-[#323232] leading-none tracking-tight">7,524 PTS<span className="text-[12px] font-normal align-top ml-0.5">~</span></p>
-                          </div>
-                          <p className="text-[11px] text-[#666] mb-0.5">+AUD $40.26</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 border-t border-gray-100 text-center">
-                      <button className="text-[#E40000] text-[13px] font-bold tracking-wide uppercase hover:underline">SEARCH FLIGHTS</button>
-                    </div>
-                  </div>
-
-                  {/* Card 4 */}
-                  <div className="bg-white border border-gray-100 rounded-[4px] shadow-sm flex flex-col relative overflow-hidden h-full">
-                    <div className="aspect-[1.8/1] relative flex-shrink-0">
-                      <img src={imgQtGoldcoast} alt="QT Gold Coast" className="w-full h-full object-cover" />
-                      <div className="absolute top-3 left-3 bg-[#C2EFE8] text-[#323232] text-[10px] font-medium tracking-wide px-2 py-1 rounded leading-none flex items-center justify-center pt-1 pb-1 uppercase space-x-1">
-                        <img src={iconClassicReward} className="w-[14px] h-[14px]" />
-                        <span className="pt-0.5">CLASSIC REWARD</span>
-                      </div>
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h4 className="text-[15px] font-medium text-[#323232] mb-1 leading-snug">QT Gold Coast</h4>
-                      <div className="flex space-x-[1px] mb-6 mt-1">
-                        {[1, 2, 3, 4].map(star => <svg key={star} className="w-[11px] h-[11px] text-[#FFB81C]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>)}
-                        <svg className="w-[11px] h-[11px] text-gray-200" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                      </div>
-                      <div className="flex-grow"></div>
-                      <div className="mt-auto">
-                        <p className="text-[13px] text-[#666] mb-0.5">1 night from</p>
-                        <p className="text-[20px] font-medium text-[#323232] leading-none tracking-tight">19,000 PTS<span className="text-[12px] font-normal align-top ml-0.5">~</span></p>
-                      </div>
-                    </div>
-                    <div className="p-4 border-t border-gray-100 text-center">
-                      <button className="text-[#E40000] text-[13px] font-bold tracking-wide uppercase hover:underline">SEARCH HOTELS</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Terms and conditions block */}
-            <div className="border-t border-[#E1E1E1] pt-6 mb-4">
-              <h4 className="text-[13px] font-medium text-[#666] mb-3">Terms and conditions</h4>
-              <p className="text-[13px] text-[#666] mb-4 leading-relaxed max-w-[90%]">
-                You must be a Qantas Frequent Flyer to earn and redeem Qantas Points. A joining fee may apply. Membership and points are subject to the Qantas Frequent Flyer program <a href="#" className="underline">Terms and Conditions</a>.
-              </p>
-              <button className="text-[13px] text-[#666] flex items-center hover:text-[#323232] transition-colors">
-                View all <svg className="ml-1 w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-              </button>
-            </div>
-          </div>
+                <UsingYourPoints />
+                <WhatsNews />
         </main>
 
-        <Footer />
-      </div>
+        <SiteFooter />
 
       {/* Modals */}
       {showOnboardingId && (
@@ -1663,19 +1454,38 @@ export default function Dashboard({ goTo }) {
         />
       )}
       {/* Sparkle Animations */}
-      {shootSparks && (
-        <div
-          className="fixed animate-shoot-sparkle z-[9999] pointer-events-none"
-          style={{
-            left: shootSparks.startX - 10,
-            top: shootSparks.startY - 10,
-            '--tx': `${shootSparks.tx}px`,
-            '--ty': `${shootSparks.ty}px`
-          }}
-        >
-          <div className="w-6 h-6 bg-yellow-300 rounded-full blur-[2px] shadow-[0_0_15px_5px_rgba(253,224,71,0.8)]" />
+      {shootSparks && (() => {
+        const mx = shootSparks.tx / 2;
+        const my = shootSparks.ty / 2 - 70;
+        return (
+        <div className="fixed z-[9999] pointer-events-none" style={{ left: shootSparks.startX, top: shootSparks.startY }}>
+          {[
+            { delay: 0,   size: 22, blur: 3, bg: 'white',                   shadow: '0 0 22px 10px rgba(255,255,255,0.95), 0 0 44px 18px rgba(253,224,71,0.75)' },
+            { delay: 55,  size: 17, blur: 3, bg: '#FEF08A',                  shadow: '0 0 16px 7px rgba(253,224,71,0.85)' },
+            { delay: 110, size: 13, blur: 2, bg: '#FDE047',                  shadow: '0 0 12px 5px rgba(253,224,71,0.75)' },
+            { delay: 165, size: 9,  blur: 2, bg: '#FCD34D',                  shadow: '0 0 8px 3px rgba(253,224,71,0.65)' },
+            { delay: 220, size: 6,  blur: 2, bg: '#F59E0B',                  shadow: '0 0 6px 2px rgba(253,224,71,0.5)' },
+            { delay: 275, size: 4,  blur: 1, bg: 'rgba(245,158,11,0.6)',     shadow: '0 0 4px 1px rgba(253,224,71,0.4)' },
+          ].map((p, i) => (
+            <div
+              key={i}
+              className="absolute animate-shoot-sparkle"
+              style={{
+                left: -p.size / 2,
+                top: -p.size / 2,
+                '--tx': `${shootSparks.tx}px`,
+                '--ty': `${shootSparks.ty}px`,
+                '--mx': `${mx}px`,
+                '--my': `${my}px`,
+                animationDelay: `${p.delay}ms`,
+              }}
+            >
+              <div style={{ width: p.size, height: p.size, backgroundColor: p.bg, borderRadius: '50%', filter: `blur(${p.blur}px)`, boxShadow: p.shadow }} />
+            </div>
+          ))}
         </div>
-      )}
+        );
+      })()}
       {scatterSparks && (
         <div className="fixed z-[9999] pointer-events-none" style={{ left: scatterSparks.x, top: scatterSparks.y }}>
           {[...Array(6)].map((_, i) => {
@@ -1695,6 +1505,39 @@ export default function Dashboard({ goTo }) {
                 }}
               >
                 <div className="w-3 h-3 bg-yellow-300 rounded-full blur-[1px] shadow-[0_0_10px_3px_rgba(253,224,71,0.8)]" />
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {completionBurst && (
+        <div className="fixed z-[9999] pointer-events-none" style={{ left: completionBurst.x, top: completionBurst.y }}>
+          {[...Array(14)].map((_, i) => {
+            const angle = (i / 14) * Math.PI * 2;
+            const dist = 30 + Math.random() * 50;
+            const sx = Math.cos(angle) * dist;
+            const sy = Math.sin(angle) * dist;
+            const colors = ['white', '#FEF9C3', '#FDE047', '#FCD34D', '#F59E0B', 'white'];
+            const size = 5 + Math.random() * 9;
+            return (
+              <div
+                key={i}
+                className="absolute animate-scatter-sparkle"
+                style={{
+                  left: -size / 2,
+                  top: -size / 2,
+                  '--sx': `${sx}px`,
+                  '--sy': `${sy}px`,
+                  animationDuration: `${0.7 + Math.random() * 0.4}s`,
+                }}
+              >
+                <div style={{
+                  width: size, height: size,
+                  backgroundColor: colors[i % colors.length],
+                  borderRadius: '50%',
+                  filter: 'blur(1px)',
+                  boxShadow: `0 0 ${size * 2}px ${size}px rgba(253,224,71,0.7)`,
+                }} />
               </div>
             );
           })}

@@ -26,16 +26,16 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     {
       kind: 'externalLink',
       title: 'Red Energy for gas and electricity',
-      body: 'Brighten up your travel plans with regular boosts of Qantas Points, just by paying your regular household electricity and gas bills on time.',
+      body: 'Brighten up your travel plans with regular boosts of Velocity Points, just by paying your regular household electricity and gas bills on time.',
       url: 'https://www.qantas.com/au/en/frequent-flyer/partners/red-energy.html',
       label: 'Learn More',
       imageSrc: redEnergyIllustration
     },
-    { kind: 'info', title: 'Switch to Red Energy', body: 'Up to 15,000 bonus Qantas Points when you switch your electricity and gas, and have paid your first bill in full.' },
-    { kind: 'info', title: 'Make the most of your plan', body: 'Once you’ve made the switch, you will earn 2 Qantas Points per $1 spent on your on-time bills. You can also earn 1,500 Qantas Points per referral.' },
+    { kind: 'info', title: 'Switch to Red Energy', body: 'Up to 15,000 bonus Velocity Points when you switch your electricity and gas, and have paid your first bill in full.' },
+    { kind: 'info', title: 'Make the most of your plan', body: 'Once you’ve made the switch, you will earn 2 Velocity Points per $1 spent on your on-time bills. You can also earn 1,500 Velocity Points per referral.' },
     {
       kind: 'survey',
-      title: 'Would you like to check Qantas Red plans now?',
+      title: 'Would you like to check AGL Energy plans now?',
       question: 'Choose one:',
       options: ['Yes, show me', 'Maybe later', 'No'],
       externalLinkIf: { match: 'Yes, show me', url: 'https://www.redenergy.com.au/qantas', label: 'Go to Red Energy' }
@@ -55,13 +55,13 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     },
     {
       kind: 'survey',
-      title: 'Earn Qantas Points with Everyday Rewards',
-      question: 'Have you set Qantas Points as your rewards choice?',
+      title: 'Earn Velocity Points with Everyday Rewards',
+      question: 'Have you set Velocity Points as your rewards choice?',
       options: ['Yes', 'No'],
       externalLinkIf: {
         match: 'No',
         url: 'https://auth.everyday.com.au/u/login',
-        label: 'Choose Qantas Points'
+        label: 'Choose Velocity Points'
       }
     },
     {
@@ -75,7 +75,7 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     {
       kind: 'info',
       title: 'Happy shopping!',
-      body: 'You’re all set. Everyday Rewards will convert to Qantas Points after you collect 2,000 EDR points.',
+      body: 'You’re all set. Everyday Rewards will convert to Velocity Points after you collect 2,000 EDR points.',
       imageSrc: everydayRewardsPointsIllustration
     }
   ],
@@ -90,15 +90,15 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     {
       kind: 'externalLink',
       title: 'Choose the right no-annual-fee card for you',
-      body: 'Pick your card and keep it simple. The Qantas Card Selector can help',
+      body: 'Pick your card and keep it simple. The Velocity Card Selector can help',
       url: 'https://cardsandbanking.qantas.com/compare-credit-cards/american-express?sortBy=default&maxAnnualFee=0&cardProviders=boq-specialist',
-      label: 'Compare Qantas Points earning credit cards',
+      label: 'Compare Velocity Points earning credit cards',
       imageSrc: noFeeCardIllustration
     },
     {
       kind: 'externalLink',
       title: 'American Express Discovery Card',
-      body: 'Earn 1.75 Qantas Points per $1 spent on eligible Qantas products and services+ and up to 0.75 Qantas Points per $1 spent on everyday purchases^',
+      body: 'Earn 2 Velocity Points per $1 spent on eligible Virgin Australia flights and up to 1.5 Velocity Points per $1 spent on everyday purchases^',
       url: 'https://www.qantas.com/au/en/frequent-flyer/member-offers/qantas-american-express-discovery-card.html',
       label: 'Learn more',
       imageSrc: noFeeCardAmexIllustration
@@ -106,7 +106,7 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     {
       kind: 'externalLink',
       title: 'Tips on how to never miss a point',
-      body: 'Make it possible with your Qantas Points earning credit card.',
+      body: 'Make it possible with your Velocity Points earning credit card.',
       url: 'https://www.qantas.com/au/en/frequent-flyer/categories/cards-and-banking/maximise-qantas-points-tips.html',
       label: 'See the tips',
       imageSrc: noFeeCardTipsIllustration
@@ -116,7 +116,7 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     {
       kind: 'externalLink',
       title: 'Fuel up and earn every time',
-      body: 'Scan your card when you fill up at BP to earn Qantas Points automatically.',
+      body: 'Scan your card when you fill up at 7-Eleven to earn Velocity Points automatically.',
       url: 'https://www.qantas.com/au/en/frequent-flyer/partners/bp.html',
       label: 'Find out more',
       imageSrc: bpRewardsIllustration
@@ -130,27 +130,27 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     },
     {
       kind: 'info',
-      title: 'Tap your QFF card at BP',
-      body: 'Scan your digital Qantas Frequent Flyer card at the counter to be rewarded with points. You can use the Qantas app, or add your Frequent Flyer card to your Google Pay or Apple Wallet.',
+      title: 'Tap your Velocity card at 7-Eleven',
+      body: 'Scan your digital Velocity Frequent Flyer card at the counter to be rewarded with points. You can use the Virgin Australia app, or add your Velocity card to your Google Pay or Apple Wallet.',
       imageSrc: bpRewardsCardIllustration
     },
     {
       kind: 'info',
       title: 'Get earning at BP',
-      body: 'Receive 2 points per litre on BP Ultimate Unleaded. 1 point per litre on all other fuels and 1 point per $1 spent on eligible in-store items. Points will show in your Qantas account within seven days.'
+      body: 'Earn Velocity Points per litre on fuel and per $1 spent on eligible in-store items at 7-Eleven. Points will show in your Velocity account within seven days.'
     }
   ],
   5: [
     {
       kind: 'info',
       title: 'Get points for staying active',
-      body: 'Download the Qantas Wellbeing app to earn points for walking, sleeping, and more.',
+      body: 'Download the Velocity app to track your points and manage your account.',
       imageSrc: wellbeingIllustration
     },
     { kind: 'pickMany', title: 'Which activities do you already track?', choices: ['Steps', 'Sleep', 'Cycling', 'Meditation', 'None'] },
     {
       kind: 'survey',
-      title: 'Do you already use the Qantas Wellbeing app?',
+      title: 'Do you already use the Velocity app?',
       question: 'Choose one:',
       options: ['Yes', 'No', 'I’ve used it before']
     },
@@ -164,24 +164,24 @@ export const WTEOnboarding: Record<number, StepType[]> = {
     {
       kind: 'info',
       title: 'Pay and earn, even overseas',
-      body: 'Qantas Pay earns 1.5 points per $1 spent overseas and 1 point per $4 in Australia.',
+      body: 'Velocity Flyer Card earns 1.5 points per $1 spent overseas and 1 point per $4 in Australia.',
       imageSrc: qantasPayIllustration
     },
     {
       kind: 'survey',
-      title: 'Have you set up your Qantas Pay account yet?',
+      title: 'Have you set up your Velocity account yet?',
       question: 'Let us know:',
       options: ['Yes', 'No', 'Not sure']
     },
-    { kind: 'pickOne', title: 'How would you prefer to use Qantas Pay?', choices: ['Tap & go in-store', 'Online shopping', 'Travel spending', 'Not sure yet'] },
-    { kind: 'pickMany', title: 'Which of these benefits appeal to you?', choices: ['No foreign transaction fees', 'Multi-currency wallet', 'Earn Qantas Points', 'Track spending'] },
+    { kind: 'pickOne', title: 'How would you prefer to use your Velocity card?', choices: ['Tap & go in-store', 'Online shopping', 'Travel spending', 'Not sure yet'] },
+    { kind: 'pickMany', title: 'Which of these benefits appeal to you?', choices: ['No foreign transaction fees', 'Multi-currency wallet', 'Earn Velocity Points', 'Track spending'] },
   ],
   7: [
     { kind: 'pickOne', title: 'Are you currently subscribed to BINGE?', choices: ['Yes', 'No', 'Used to be'] },
     {
       kind: 'info',
       title: 'Watch and earn',
-      body: 'Earn 1,000 bonus points when you join BINGE via Qantas, and 50 points each month you stay subscribed.',
+      body: 'Earn bonus points on eligible entertainment and streaming subscriptions.',
       imageSrc: bingeIllustration
     },
     { kind: 'pickMany', title: 'What are your top binge genres?', choices: ['Drama', 'Comedy', 'Docos', 'Reality', 'Kids shows'] },

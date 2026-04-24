@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ConnectedRewardCard from './ConnectedRewardCard';
-import PointsRooLogo from '../assets/points-roo.svg';
+import VelocityPointsIcon from '../assets/icons/velocity-points.svg';
 import { useSaveSlots } from '../state/useSaveSlots';
 import { maskPts } from '../utils/maskPts';
 
@@ -106,7 +106,7 @@ export default function StickyFooter({
         <div className="flex flex-col items-center">
           <div className="flex items-baseline space-x-1 flex-wrap justify-center">
             <span className="text-[15px] text-[#323232]">Target</span>
-            <img src={PointsRooLogo} alt="" className="w-[16px] h-[18px] translate-y-0.5" />
+            <img src={VelocityPointsIcon} alt="" className="w-[16px] h-[18px] translate-y-0.5" />
             <span className="text-[16px] font-medium text-[#323232] leading-none">
               {opaqueEarn ? maskPts(totalPts || 0) : (totalPts ? totalPts.toLocaleString() : '0')}
             </span>

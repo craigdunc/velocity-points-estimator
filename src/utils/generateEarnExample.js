@@ -35,23 +35,39 @@ export const generateEarnExample = (wte, tierIdx) => {
 
     const personaImg = `https://picsum.photos/seed/${Math.abs(seed)}/800/400`;
 
-    // Provide realistic item names depending on the name of the WTE or generic.
+    // Provide realistic item names depending on the WTE
     const wteLower = wte.name.toLowerCase();
     let baseItems = [];
-    if (wteLower.includes('flight') || wteLower.includes('jetstar') || wteLower.includes('travel')) {
-        baseItems = ['Flight to SYD (Economy, Return)', 'Flight to MEL (Discount Economy, One-Way)', 'Flight to BNE (Economy, Return)', 'Flight to PER (Discount Economy, One-Way)', 'Flight to AKL (Economy, Return)', 'Flight to SIN (Discount Economy, Return)', 'Baggage Add-on', 'Seat Selection'];
-    } else if (wteLower.includes('woolworths') || wteLower.includes('everyday')) {
-        baseItems = ['Weekly Groceries', 'Fresh Produce', 'Household Essentials', 'Pantry Stock-up', 'Weekend BBQ Supplies', 'Big W Home Goods'];
-    } else if (wteLower.includes('bp') || wteLower.includes('fuel')) {
-        baseItems = ['Unleaded 91 Fuel Fill', 'Ultimate 98 Fuel Fill', 'Diesel Fill', 'In-store Snacks & Drinks', 'Car Wash Purchase'];
-    } else if (wteLower.includes('card') || wteLower.includes('pay') || wteLower.includes('banking')) {
-        baseItems = ['Monthly Groceries', 'Dining & Entertainment', 'Online Shopping', 'Utility Bills Payment', 'Travel Booking', 'Fuel & Transport'];
+    if (wteLower.includes('virgin australia') && wteLower.includes('flight')) {
+        baseItems = ['Flight to SYD (Economy, Return)', 'Flight to MEL (Economy, One-Way)', 'Flight to BNE (Economy, Return)', 'Flight to PER (Economy, One-Way)', 'Flight to SIN (Economy, Return, Singapore Airlines)', 'Flight to DXB (Economy, Return, Etihad)', 'Baggage Add-on', 'Seat Selection'];
+    } else if (wteLower.includes('flybuys') || wteLower.includes('coles')) {
+        baseItems = ['Weekly Coles Shop', 'Fresh Produce', 'Household Essentials', 'Pantry Stock-up', 'Weekend Entertaining', 'Liquorland Wine Order', 'First Choice Case Purchase'];
+    } else if (wteLower.includes('7-eleven') || wteLower.includes('seven-eleven')) {
+        baseItems = ['Premium 95 Fuel Fill', 'Regular Unleaded Fill', 'Diesel Fill', 'In-store Coffee', 'Snacks & Drinks', 'Car Wash'];
+    } else if (wteLower.includes('agl')) {
+        baseItems = ['Electricity Bill', 'Gas Bill', 'Internet Plan', 'Mobile Plan', 'Switching Bonus'];
+    } else if (wteLower.includes('velocity estore') || wteLower.includes('estore')) {
+        baseItems = ['THE ICONIC Purchase', 'Myer Online Order', 'Apple Online Purchase', 'Sephora Beauty Order', 'David Jones Online', 'Catch.com.au Purchase', 'Lululemon Order'];
+    } else if (wteLower.includes('virgin wines')) {
+        baseItems = ['Mixed Dozen Red', 'Mixed Dozen White', 'Premium Shiraz Case', 'Champagne & Sparkling', 'Sauvignon Blanc Case', 'Rosé Selection'];
+    } else if (wteLower.includes('card') || wteLower.includes('velocity flyer') || wteLower.includes('credit')) {
+        baseItems = ['Monthly Groceries', 'Dining & Entertainment', 'Online Shopping', 'Utility Bills Payment', 'Travel Booking', 'Fuel & Transport', 'Subscription Services'];
     } else if (wteLower.includes('insurance')) {
-        baseItems = ['Annual Premium Payment', 'Monthly Premium Installment', 'Policy Renewal', 'Additional Coverage Add-on'];
-    } else if (wteLower.includes('wine')) {
-        baseItems = ['Mixed Dozen Red Wine', 'Mixed Dozen White Wine', 'Premium Shiraz Case', 'Champagne Multi-pack', 'Gourmet Food Box', 'Wine Accessories'];
-    } else if (wteLower.includes('hotel') || wteLower.includes('airbnb') || wteLower.includes('accommodation')) {
-        baseItems = ['2-Night Weekend Stay', '3-Night City Escape', '5-Night Holiday Package', 'Hotel Dining & Room Service', 'Spa Treatment Add-on'];
+        baseItems = ['Annual Premium Payment', 'Monthly Premium Instalment', 'Policy Renewal', 'New Customer Bonus Earned'];
+    } else if (wteLower.includes('medibank')) {
+        baseItems = ['Hospital Cover Premium', 'Extras Cover Premium', 'New Member Bonus Earned', 'Annual Policy Renewal'];
+    } else if (wteLower.includes('velocity hotels')) {
+        baseItems = ['2-Night Weekend Stay', '3-Night City Escape', '5-Night Holiday Stay', 'Promotional Rate Booking', 'Hotel Dining Add-on'];
+    } else if (wteLower.includes('accor')) {
+        baseItems = ['Novotel Stay', 'Pullman Stay', 'Mercure Stay', 'ibis Stay', 'Sofitel Stay', 'ALL Reward Points Transfer'];
+    } else if (wteLower.includes('hotel transfer')) {
+        baseItems = ['Marriott Bonvoy Transfer', 'Hilton Honors Transfer', 'IHG Points Transfer', 'Shangri-La Circle Transfer', 'TFE Hotels Points Transfer'];
+    } else if (wteLower.includes('car rental') || wteLower.includes('car rentals')) {
+        baseItems = ['Hertz Compact Rental', 'Hertz SUV Rental', 'Europcar Economy Rental', 'Europcar SUV Rental', 'Business Trip Rental'];
+    } else if (wteLower.includes('virgin australia holidays')) {
+        baseItems = ['Bali Beach Package', 'Fiji Family Package', 'Queensland Island Escape', 'Gold Coast Weekend', 'New Zealand Ski Trip', 'Hawaii Package'];
+    } else if (wteLower.includes('luxury escapes')) {
+        baseItems = ['Luxury Resort Package', 'Cruise Booking', 'Tour & Adventure Package', 'Private Villa Stay', 'City Hotel Deal'];
     } else {
         baseItems = ['Monthly Usage', 'Standard Purchase', 'Premium Service Use', 'Subscription Renewal', 'General Shopping', 'Partner Offer Purchase'];
     }
@@ -61,7 +77,6 @@ export const generateEarnExample = (wte, tierIdx) => {
     const tableRawItems = shuffle(baseItems).slice(0, numItems);
 
     // Divide spend and points among the items
-    // We want rough proportional splits.
     let splits = [];
     let splitSum = 0;
     for (let i = 0; i < numItems; i++) {
@@ -75,7 +90,7 @@ export const generateEarnExample = (wte, tierIdx) => {
     let currentPtsSum = 0;
     const tableData = [];
 
-    // Generate random dates in 2025 in order
+    // Generate dates in 2025 in order
     let currentMonth = 1;
 
     for (let i = 0; i < numItems; i++) {
@@ -85,7 +100,6 @@ export const generateEarnExample = (wte, tierIdx) => {
 
         const dateStr = `${day.toString().padStart(2, '0')} ${new Date(2025, currentMonth - 1, 1).toLocaleString('default', { month: 'short' })} 2025`;
 
-        // Calculate values
         let itemSpend = Math.round(spend * (splits[i] / splitSum));
         let itemPts = Math.round(pts * (splits[i] / splitSum));
 
@@ -107,11 +121,11 @@ export const generateEarnExample = (wte, tierIdx) => {
     }
 
     // Descriptive text
-    let frequencyDesc = "regular";
-    if (tierIdx === 0) frequencyDesc = "infrequent";
-    if (tierIdx >= 3) frequencyDesc = "frequent";
+    let frequencyDesc = 'regular';
+    if (tierIdx === 0) frequencyDesc = 'infrequent';
+    if (tierIdx >= 3) frequencyDesc = 'frequent';
 
-    const personaDesc = `${fName} lives in ${city} and is a ${frequencyDesc} customer of ${wte.name}. Over the course of 2025, ${fName} made several purchases adjusting to their standard spending habits. Across ${numItems} main transaction periods, ${fName} spent approximately $${spend?.toLocaleString() ?? 0} with ${wte.name}, which yielded an estimated total of ${pts.toLocaleString()} Qantas Points for their Frequent Flyer account. They hold no active bonus status, so the points reflect the standard base earn rate.`;
+    const personaDesc = `${fName} lives in ${city} and is a ${frequencyDesc} customer of ${wte.name}. Over the course of 2025, ${fName} made several purchases aligned with their standard spending habits. Across ${numItems} main transaction periods, ${fName} spent approximately $${spend?.toLocaleString() ?? 0} with ${wte.name}, earning an estimated total of ${pts.toLocaleString()} Velocity Points. They hold no active bonus status, so the points reflect the standard base earn rate.`;
 
     return {
         personaName,

@@ -326,7 +326,7 @@ export function SaveSlotsProvider({ children }: { children: ReactNode }) {
         selectedWTEs.forEach(w => {
           const tgt = targetById[w.id] ?? 0;
           const weeklyTgt = tgt / 4;
-          const actual = Math.floor(weeklyTgt * (0.8 + Math.random() * 0.4));
+          const actual = Math.floor(weeklyTgt * (0.9 + Math.random() * 0.4));
           nextResults[w.id] = (nextResults[w.id] || 0) + actual;
           nextWeekTotal += actual;
         });

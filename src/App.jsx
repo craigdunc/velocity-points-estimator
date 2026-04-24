@@ -8,16 +8,18 @@ import RewardsScreen from './screens/RewardsScreen'; // Import the new screen
 import Dashboard from './screens/Dashboard';
 import MonthChange from './components/MonthChange'; // Assuming this acts like a screen
 import SettingsScreen from './screens/SettingsScreen';
+import NewDesign from './screens/NewDesign';
 
 const steps = [
   SlotSelect,    // 0
   Intro1,        // 1
   Intro2,        // 2
   WTESelection,  // 3
-  RewardsScreen, // 4 <-- New Screen
+  () => null,    // 4 <-- Removed RewardsScreen page
   Dashboard,     // 5
   MonthChange,   // 6
   SettingsScreen, // 7
+  NewDesign,     // 8
 ];
 
 // Simple helper to get the index of a component in the steps array
@@ -35,6 +37,7 @@ export default function App() {
       setPrevStepIndex(stepIndex);
       setNavPayload(payload);
       setStepIndex(targetIndex);
+      window.scrollTo({ top: 0, behavior: 'instant' });
     } else {
       console.warn(`Attempted to navigate to invalid step index: ${targetIndex}`);
     }
