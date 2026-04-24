@@ -38,7 +38,7 @@ import logoCarpetCourt from '../assets/logos/carpetcourt.png';
 import logoEDR from '../assets/logos/EDR.svg';
 import imgChoose from '../assets/images/choose.png';
 import imgAdd from '../assets/images/add.png';
-import imgSetup from '../assets/images/setup.png';
+import imgSetup from '../assets/images/Setup.png';
 import logoUpgrade from '../assets/logos/upgrade.svg';
 import logoPoints from '../assets/logos/points.svg';
 import iconClassicReward from '../assets/icons/classic reward.svg';
