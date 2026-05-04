@@ -1194,7 +1194,7 @@ Keep it encouraging and warm. KEEP IT TO EXACTLY 2 SENTENCES. Do not ask any mor
                       </div>
                     </div>
                     {/* Right column: red member card with full-height border */}
-                    <div className="hidden sm:flex flex-col border-l border-transparent w-[204px] shrink-0 items-center justify-start px-4 py-5">
+                    <div className="hidden sm:flex flex-col border-l border-transparent w-[204px] shrink-0 items-center justify-start px-4 pt-[100px] pb-5">
                       <div className="w-[172px] h-[100px] rounded-xl flex-col justify-between p-4 text-white flex"
                            style={{ background: 'linear-gradient(135deg, #7A1515 0%, #C90000 100%)' }}>
                         <div className="flex items-center justify-end gap-1.5 text-[12px] font-medium opacity-90">
@@ -1397,7 +1397,7 @@ Keep it encouraging and warm. KEEP IT TO EXACTLY 2 SENTENCES. Do not ask any mor
                 </div>
                     </div>{/* end left column */}
                     {/* Right column: red member card with full-height border */}
-                    <div className="hidden sm:flex flex-col border-l border-transparent w-[204px] shrink-0 items-center justify-start px-4 py-5">
+                    <div className="hidden sm:flex flex-col border-l border-transparent w-[204px] shrink-0 items-center justify-start px-4 pt-[100px] pb-5">
                       <div className="w-[172px] h-[100px] rounded-xl flex flex-col justify-between p-4 text-white"
                            style={{ background: 'linear-gradient(135deg, #7A1515 0%, #C90000 100%)' }}>
                         <div className="flex items-center justify-end gap-1.5 text-[12px] font-medium opacity-90">
